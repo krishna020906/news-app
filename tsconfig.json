@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/components/MainPage.jsx", "app/components/SearchBar.jsx", "app/components/FilterChips.jsx", "app/components/ArticleCard.jsx", "app/components/BiasMeter.jsx", "app/components/Recommendation.jsx", "app/components/MobileNav.jsx", "app/components/ArticleModal.jsx", "app/components/Header.jsx"  ],
   "exclude": ["node_modules"]
 }
