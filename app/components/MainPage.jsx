@@ -1,6 +1,3 @@
-
-
-
 // File: components/MainPage.jsx
 import React, { useState } from 'react';
 import Header from './Header';
@@ -41,31 +38,68 @@ export default function MainPage() {
   const [selected, setSelected] = useState(null);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div
+      className="min-h-screen"
+      style={{
+        /* prefer --bg if present, otherwise fall back to --card-bg */
+        background: 'var(--bg, var(--card-bg))',
+        color: 'var(--text-title)'
+      }}
+    >
       <Header onSearch={(q) => setQuery(q)} />
 
       <main className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* LEFT SIDEBAR */}
         <section className="hidden md:block md:col-span-1">
-          <div className="rounded-2xl overflow-hidden shadow-md bg-white border border-slate-100">
-            <img src={sampleArticles[0].image} alt="hero" className="object-cover h-48 w-full" />
+          <div
+            className="rounded-2xl overflow-hidden shadow-md"
+            style={{
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)'
+            }}
+          >
+            <img
+              src={sampleArticles[0].image}
+              alt="hero"
+              className="object-cover h-48 w-full"
+            />
+
             <div className="p-4">
-              <h2 className="text-lg font-bold text-slate-700">News from around the world for you</h2>
-              <p className="mt-2 text-slate-600 text-sm">Best time to read, take your time to read a little more of this world</p>
-              <button className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-full">Get Started</button>
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text-title)' }}>
+                News from around the world for you
+              </h2>
+
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                Best time to read, take your time to read a little more of this world
+              </p>
+
+              <button
+                className="mt-4 px-4 py-2 rounded-full"
+                style={{ background: 'var(--button-bg, var(--accent))', color: 'var(--button-text, white)' }}
+              >
+                Get Started
+              </button>
             </div>
           </div>
         </section>
 
+        {/* MAIN FEED */}
         <section className="md:col-span-2 space-y-4">
           <FilterChips />
 
           <div className="space-y-4">
             {sampleArticles.map((a) => (
-              <ArticleCard key={a.id} article={a} onOpen={(art) => setSelected(art)} />
+              <ArticleCard
+                key={a.id}
+                article={a}
+                onOpen={(art) => setSelected(art)}
+              />
             ))}
           </div>
         </section>
 
+        {/* RIGHT SIDEBAR */}
         <aside className="hidden md:block">
           <Recommendation items={sampleArticles} />
         </aside>
@@ -73,11 +107,9 @@ export default function MainPage() {
 
       <MobileNav />
 
-      {selected && <ArticleModal article={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <ArticleModal article={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
-
-
-
-

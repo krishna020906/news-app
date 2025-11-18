@@ -1,4 +1,130 @@
 @import "tailwindcss";
+@import "https://unpkg.com/open-props/easings.min.css";
+
+
+/* globals.css */
+
+/* LIGHT THEME */
+:root[data-theme="light"] {
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  --text-title: #0f172a;
+  --text-body: #475569;
+
+  --badge-bg: rgba(255, 255, 255, 0.8);
+
+  --button-bg: #f97316;
+  --button-text: #ffffff;
+}
+
+/* DARK THEME */
+:root[data-theme="dark"] {
+  --card-bg: #1a1a1a;
+  --card-border: #333;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --text-title: #f1f5f9;
+  --text-body: #cbd5e1;
+
+  --badge-bg: rgba(30, 30, 30, 0.8);
+
+  --button-bg: #f97316; /* still orange */
+  --button-text: #ffffff; /* stays white */
+}
+
+/* Shared Card Styling */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+}
+
+.card-title {
+  color: var(--text-title);
+}
+
+.card-body {
+  color: var(--text-body);
+}
+
+
+/* Theme variables (base) 
+
+  --bg: #f8fafc;         
+  --card: #ffffff;       
+  --muted-card: #f1f5f9; 
+
+  --text: #0f172a;       
+  --muted: #64748b;      
+
+
+  --accent: #f97316;     
+  --accent-contrast: #ffffff;
+
+  
+  --badge-bg: rgba(255,255,255,0.9);
+  --badge-text: #0f172a;
+
+
+[data-theme="dark"], :root.dark {
+  --bg: #071022;
+  --card: #071226;
+  --muted-card: #0b1220;
+
+  --text: #e6eef8;
+  --muted: #9fb0c8;
+
+  --accent: #fb923c;     
+  --accent-contrast: #071226;
+
+  --badge-bg: rgba(12,16,24,0.6);
+  --badge-text: #e6eef8;
+}
+
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+
+.bg-page { background: var(--bg); }
+.bg-card { background: var(--card); }
+.bg-muted-card { background: var(--muted-card); }
+
+.text-primary { color: var(--text); }
+.text-muted { color: var(--muted); }
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  padding: .5rem .9rem;
+  border-radius: 9999px;
+}
+
+
+.badge-soft {
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  padding: .25rem .5rem;
+  border-radius: 9999px;
+  font-size: .75rem;
+}
+
+
+.theme-transition * {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+
+
 
 :root {
   --background: #ffffff;
@@ -26,20 +152,20 @@ body {
 }
 
 
-/* Theme variables (light/dark) */
+
 :root {
   --bg: #ffffff;
   --card: #ffffff;
-  --text: #0f172a;      /* slate-900 */
-  --muted: #64748b;     /* slate-500 */
+  --text: #0f172a;      
+  --muted: #64748b;    
   --icon-fill: #0f172a;
   --icon-fill-hover: #111827;
 }
 
-/* dark theme variables */
+
 [data-theme="dark"],
 :root.dark {
-  --bg: #061124;        /* deep dark */
+  --bg: #061124;       
   --card: #071226;
   --text: #e6eef8;
   --muted: #9fb0c8;
@@ -47,24 +173,23 @@ body {
   --icon-fill-hover: #ffffff;
 }
 
-/* apply them to body & common components */
+
 html, body {
   background: var(--bg);
   color: var(--text);
 }
 
-/* small utility: dark mode friendly containers */
 .bg-card {
   background: var(--card);
   color: var(--text);
-}
+} */
 
 /* ------------------------------
    Sun & moon SVG animation
    (your provided CSS, copied and adapted)
    ------------------------------ */
 
-@import "https://unpkg.com/open-props/easings.min.css";
+
 
 .sun-and-moon > :is(.moon, .sun, .sun-beams) {
   transform-origin: center;
