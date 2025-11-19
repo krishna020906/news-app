@@ -1,4 +1,5 @@
 // File: components/MainPage.jsx
+'use client'
 import React, { useState } from 'react';
 import Header from './Header';
 import FilterChips from './FilterChips';
@@ -6,6 +7,8 @@ import ArticleCard from './ArticleCard';
 import Recommendation from './Recommendation';
 import MobileNav from './MobileNav';
 import ArticleModal from './ArticleModal';
+
+
 
 const sampleArticles = [
   {

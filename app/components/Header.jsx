@@ -1,9 +1,16 @@
 // File: components/Header.jsx
+"use clien"
 import React from 'react';
+
 import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
+import SignUp from './SignUp'
+ 
+
+
 
 export default function Header({ onSearch }) {
+
   return (
     <header
       className="sticky top-0 z-20 border-b"
@@ -59,6 +66,9 @@ export default function Header({ onSearch }) {
           >
             Get Started
           </button>
+          <SignUp  >
+              
+          </SignUp>
 
           <div
             className="h-8 w-8 rounded-full"
