@@ -12,7 +12,7 @@ export default function Signup() {
   return (
     <button
       onClick={handleSignUpRedirect} // Attach the handler directly
-      className="px-5 py-2 rounded-m font-medium `bg-[var(--button-bg)]` `text-[var(--button-text)]` shadow-md hover:opacity-90 transition-all duration-200"
+      className="px-5 py-2 rounded-m font-medium bg-[var(--button-bg)] text-[var(--button-text)] shadow-md hover:opacity-90 transition-all duration-200"
     >
       Sign Up
     </button>

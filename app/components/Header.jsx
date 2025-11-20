@@ -5,8 +5,7 @@ import React from 'react';
 import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
 import SignUp from './SignUp'
- 
-
+import PostNewsButton from './PostNewsButton'
 
 
 export default function Header({ onSearch }) {
@@ -66,9 +65,12 @@ export default function Header({ onSearch }) {
           >
             Get Started
           </button>
-          <SignUp  >
+          {/* <SignUp  >
               
-          </SignUp>
+          </SignUp> */}
+          <PostNewsButton>
+            
+          </PostNewsButton>
 
           <div
             className="h-8 w-8 rounded-full"
