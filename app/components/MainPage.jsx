@@ -7,6 +7,7 @@ import ArticleCard from './ArticleCard';
 import Recommendation from './Recommendation';
 import MobileNav from './MobileNav';
 import ArticleModal from './ArticleModal';
+import NewsFeed from './NewsFeed'
 
 
 
@@ -91,6 +92,15 @@ export default function MainPage() {
         <section className="md:col-span-2 space-y-4">
           <FilterChips />
 
+          <NewsFeed
+            query={query}
+            onOpen={(art) => setSelected(art)}
+          />
+        </section>
+
+        {/* <section className="md:col-span-2 space-y-4">
+          <FilterChips />
+
           <div className="space-y-4">
             {sampleArticles.map((a) => (
               <ArticleCard
@@ -100,7 +110,7 @@ export default function MainPage() {
               />
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* RIGHT SIDEBAR */}
         <aside className="hidden md:block">

@@ -7,7 +7,8 @@ export default function ArticleCard({ article, onOpen = () => {} }) {
     <article className="card overflow-hidden">
       <div className="relative h-44 md:h-56 lg:h-44">
         <img src={article.image} alt="hero" className="object-cover w-full h-full" />
-
+              
+        
         <div
           className="absolute left-4 top-4 px-3 py-1 text-xs font-medium rounded-full"
           style={{
