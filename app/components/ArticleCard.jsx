@@ -1,19 +1,29 @@
 // File: components/ArticleCard.jsx
-import React from 'react';
-import BiasMeter from './BiasMeter';
+import React from "react";
+import BiasMeter from "./BiasMeter";
 
-export default function ArticleCard({ article, onOpen = () => {} }) {
+export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
   return (
-    <article className="card overflow-hidden">
+    <article
+      className="card overflow-hidden cursor-pointer"
+      onClick={() => onOpen(article)}
+    >
       <div className="relative h-44 md:h-56 lg:h-44">
-        <img src={article.image} alt="hero" className="object-cover w-full h-full" />
-              
-        
+        {article.image ? (
+          <img
+            src={article.image}
+            alt={article.title || "hero"}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-800" />
+        )}
+
         <div
           className="absolute left-4 top-4 px-3 py-1 text-xs font-medium rounded-full"
           style={{
             background: "var(--badge-bg)",
-            backdropFilter: "blur(6px)"
+            backdropFilter: "blur(6px)",
           }}
         >
           {article.source}
@@ -33,17 +43,55 @@ export default function ArticleCard({ article, onOpen = () => {} }) {
 
         <div className="mt-4 flex items-center justify-between text-sm card-body">
           <div className="flex gap-4 items-center">
-            <button className="flex items-center gap-2">👍 <span>{Math.floor(Math.random() * 200)}</span></button>
-            <button className="flex items-center gap-2">💬 <span>{article.comments}</span></button>
+            {/* LIKE */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation(); // don't trigger onOpen
+                onReact && onReact("like");
+              }}
+              className="flex items-center gap-2 hover:opacity-80"
+            >
+              👍 <span>{article.likes ?? 0}</span>
+            </button>
+
+            {/* DISLIKE */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReact && onReact("dislike");
+              }}
+              className="flex items-center gap-2 hover:opacity-80"
+            >
+              👎 <span>{article.dislikes ?? 0}</span>
+            </button>
+
+            {/* COMMENTS */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen(article);
+              }}
+              className="flex items-center gap-2 hover:opacity-80"
+            >
+              💬 <span>{article.comments ?? 0}</span>
+            </button>
+
             <span>· {article.time}</span>
           </div>
 
           <button
-            onClick={() => onOpen(article)}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(article);
+            }}
             className="px-3 py-1 rounded-full text-sm"
             style={{
               background: "var(--button-bg)",
-              color: "var(--button-text)"
+              color: "var(--button-text)",
             }}
           >
             Read
@@ -53,7 +101,6 @@ export default function ArticleCard({ article, onOpen = () => {} }) {
     </article>
   );
 }
-
 
 
 

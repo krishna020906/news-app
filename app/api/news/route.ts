@@ -85,7 +85,7 @@ export async function GET(req: Request) {
       .lean();
 
     const serialised = posts.map((p: any) => ({
-      _id: p._id.toString(),
+      id: p._id.toString(),
       title: p.title,
       content: p.content,
       mediaUrl: p.mediaUrl || "",
@@ -94,6 +94,9 @@ export async function GET(req: Request) {
       authorName: p.authorName || "",
       authorEmail: p.authorEmail || "",
       createdAt: p.createdAt ? p.createdAt.toISOString() : "",
+      likesCount: p.likesCount || 0,
+      dislikesCount: p.dislikesCount || 0,
+      commentsCount: p.commentsCount || 0,
     }));
 
     return new Response(
