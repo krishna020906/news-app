@@ -32,6 +32,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    hobbies: { type: [String], default: [] },
     age: {
       type: Number,
       min: 13,
@@ -61,6 +62,7 @@ const UserSchema = new mongoose.Schema(
       type: Date,
     },
   },
+
   {
     timestamps: true, // createdAt, updatedAt
   }

@@ -8,6 +8,7 @@ import Recommendation from './Recommendation';
 import MobileNav from './MobileNav';
 import ArticleModal from './ArticleModal';
 import NewsFeed from './NewsFeed'
+import { useRouter } from "next/navigation";
 
 
 
@@ -40,6 +41,7 @@ const sampleArticles = [
 export default function MainPage() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
+  const router = useRouter()
 
   return (
     <div
@@ -94,7 +96,11 @@ export default function MainPage() {
 
           <NewsFeed
             query={query}
-            onOpen={(art) => setSelected(art)}
+            onOpen={(article) => {
+              // go to /news/[id]
+              router.push(`/news/${article.id}`);
+        }}
+            // onOpen={(art) => setSelected(art)}
           />
         </section>
 

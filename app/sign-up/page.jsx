@@ -23,7 +23,7 @@ export default function SignUpPage() {
       // user created successfully
       console.log("User created:", userCredential.user);
       // redirect to dashboard or welcome page
-      router.push("/"); // change destination as needed
+      router.push("/profile-setup"); // change destination as needed
     } catch (err) {
       console.error("Sign up error:", err);
       // Show friendly error message
