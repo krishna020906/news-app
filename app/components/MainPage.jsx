@@ -9,6 +9,7 @@ import MobileNav from './MobileNav';
 import ArticleModal from './ArticleModal';
 import NewsFeed from './NewsFeed'
 import { useRouter } from "next/navigation";
+import MyNewsButton from './MyNewsButton'
 
 
 

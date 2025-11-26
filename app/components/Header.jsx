@@ -6,6 +6,7 @@ import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
 import SignUp from './SignUp'
 import PostNewsButton from './PostNewsButton'
+import MyNewsButton from './MyNewsButton';
 
 
 export default function Header({ onSearch }) {
@@ -18,7 +19,7 @@ export default function Header({ onSearch }) {
         borderColor: "var(--card-border)"
       }}
     >
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
@@ -57,7 +58,7 @@ export default function Header({ onSearch }) {
 
         <div className="flex items-center gap-3">
           <button
-            className="hidden md:block px-3 py-2 rounded-md"
+            className="hidden md:block px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap hover:opacity-95 transition"
             style={{
               background: "var(--button-bg)",
               color: "var(--button-text)"
@@ -71,11 +72,12 @@ export default function Header({ onSearch }) {
           <PostNewsButton>
             
           </PostNewsButton>
-
+          <MyNewsButton></MyNewsButton>
           <div
             className="h-8 w-8 rounded-full"
             style={{ background: "var(--card-border)" }}
           />
+          
         </div>
       </div>
 
