@@ -21,6 +21,17 @@ export async function POST(req: Request) {
       tags,
     } = body;
 
+
+    
+    // Normalize tags a bit for consistent matching
+    const normalizedTags = Array.isArray(tags)
+      ? tags
+          .map((t: string) => t.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+
+
+
     if (!title || !content) {
       return new Response(
         JSON.stringify({ error: "Missing title or content" }),
@@ -42,7 +53,8 @@ export async function POST(req: Request) {
 
       // classification
       category: category || "general",
-      tags: Array.isArray(tags) ? tags : [],
+      tags: normalizedTags , 
+      // Array.isArray(tags) ? tags : [],
 
       // author info
       authorUid: decoded.uid,
@@ -91,6 +103,7 @@ export async function GET(req: Request) {
       mediaUrl: p.mediaUrl || "",
       mediaType: p.mediaType || "none",
       category: p.category || "general",
+      tags: Array.isArray(p.tags) ? p.tags : [],
       authorName: p.authorName || "",
       authorEmail: p.authorEmail || "",
       createdAt: p.createdAt ? p.createdAt.toISOString() : "",
