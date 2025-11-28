@@ -38,6 +38,48 @@ const HOBBY_TAGS = [
 ];
 
 export default function PostNewsPage() {
+
+  const INDIAN_STATES = [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Delhi",
+    "Jammu & Kashmir",
+    "Ladakh",
+  ];
+
+
+
+
+  // NEW:
+
+  const [affectedState, setAffectedState] = useState("");
+
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -154,6 +196,13 @@ export default function PostNewsPage() {
       if (!user) throw new Error("Not authenticated");
 
       const idToken = await user.getIdToken();
+      console.log("SUBMIT payload:", {
+        title,
+        category,
+        selectedTags,
+        affectedState,
+      });
+
 
       const res = await fetch("/api/news", {
         method: "POST",
@@ -168,6 +217,7 @@ export default function PostNewsPage() {
           // ---- NEW: send category + tags ----
           category,
           tags: selectedTags,
+          affectedState,
         }),
       });
 
@@ -282,6 +332,37 @@ export default function PostNewsPage() {
               })}
             </div>
           </div>
+                    {/* NEW: Location of people affected by this news */}
+          <div className="flex flex-col gap-2">
+            <label className="card-body text-sm font-medium">
+              Location of people affected
+            </label>
+            <p className="card-body text-xs opacity-70">
+              This helps us show this news to people from that area in their personalised feed.
+            </p>
+
+            {/* State (optional) */}
+            <div className="flex flex-col gap-1">
+              <span className="card-body text-xs">State (optional)</span>
+              <select
+                value={affectedState}
+                onChange={(e) => setAffectedState(e.target.value)}
+                className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">All / Not specific</option>
+                {INDIAN_STATES.map((st) => (
+                  <option
+                    key={st}
+                    value={st}
+                    className="bg-[var(--card-bg)]"
+                  >
+                    {st}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
 
           {/* File upload section */}
           <div className="flex flex-col gap-2">

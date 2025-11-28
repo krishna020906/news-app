@@ -54,6 +54,8 @@ export async function GET(req: Request) {
     }
 
     // 🔥 Build interests from profile
+    const userState = (userDoc.state || "").toLowerCase();
+
     const profession = (userDoc.profession || "").toLowerCase();
     const hobbies: string[] = Array.isArray(userDoc.hobbies)
       ? userDoc.hobbies.map((h: string) => h.toLowerCase())
@@ -80,19 +82,48 @@ export async function GET(req: Request) {
         ? p.tags.map((t: string) => t.toLowerCase())
         : [];
 
-      // tag matches with hobbies/profession
+      const affectedState = (p.affectedState || "").toLowerCase();
+
+      // Tag / interest scoring (as before)
       if (interests.length) {
         const matched = tags.filter((t) => interests.includes(t)).length;
         score += matched * 3;
       }
 
-      // category match
       if (category && interests.includes(category)) {
         score += 2;
       }
 
+      // 🌍 NEW: location-based scoring
+      if (userState && affectedState && userState === affectedState) {
+        score += 6; // strong boost for local news
+      }
+
       return { ...p, score };
     });
+
+
+    // const scored: Scored[] = candidates.map((p: any) => {
+    //   let score = 0;
+
+    //   const category = (p.category || "").toLowerCase();
+    //   const tags: string[] = Array.isArray(p.tags)
+    //     ? p.tags.map((t: string) => t.toLowerCase())
+    //     : [];
+
+    //   // tag matches with hobbies/profession
+    //   if (interests.length) {
+    //     const matched = tags.filter((t) => interests.includes(t)).length;
+    //     score += matched * 3;
+    //   }
+
+    //   // category match
+    //   if (category && interests.includes(category)) {
+    //     score += 2;
+    //   }
+
+    //   return { ...p, score };
+    // });
 
     const withScore = scored.filter((p) => p.score > 0);
 

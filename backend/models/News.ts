@@ -80,6 +80,11 @@ const NewsSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    affectedState: {
+      type: String,
+      trim: true,
+      index: true,
+    },
   },
   {
     timestamps: true, // createdAt & updatedAt

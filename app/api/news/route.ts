@@ -19,9 +19,10 @@ export async function POST(req: Request) {
       mediaPublicId, // optional, if you later capture Cloudinary public_id
       category,
       tags,
+      affectedState,
     } = body;
 
-
+    console.log("API /api/news body:", body);  // 👈 add this
     
     // Normalize tags a bit for consistent matching
     const normalizedTags = Array.isArray(tags)
@@ -62,6 +63,8 @@ export async function POST(req: Request) {
       authorName: user?.name || decoded.name || undefined,
 
       // status defaults in schema: status: "published"
+
+      affectedState: affectedState?.trim() || undefined,
     });
 
     return new Response(
