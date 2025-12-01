@@ -7,6 +7,7 @@ import ThemeToggle from './ThemeToggle';
 import SignUp from './SignUp'
 import PostNewsButton from './PostNewsButton'
 import MyNewsButton from './MyNewsButton';
+import ProfileButton from './ProfileButton'
 
 
 export default function Header({ onSearch }) {
@@ -73,10 +74,11 @@ export default function Header({ onSearch }) {
             
           </PostNewsButton>
           <MyNewsButton></MyNewsButton>
-          <div
+          <ProfileButton/>
+          {/* <div
             className="h-8 w-8 rounded-full"
             style={{ background: "var(--card-border)" }}
-          />
+          /> */}
           
         </div>
       </div>
