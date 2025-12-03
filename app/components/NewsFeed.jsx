@@ -29,7 +29,7 @@ function makeSummary(content) {
   return words.slice(0, 40).join(" ") + "…";
 }
 
-export default function NewsFeed({ onOpen, query }) {
+export default function NewsFeed({ onOpen, query , category }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,6 +63,7 @@ export default function NewsFeed({ onOpen, query }) {
           shares: 0,
           likes: p.likesCount || 0,
           dislikes: p.dislikesCount || 0,
+          category: p.category || "general",   // 👈 NEW
           bias: { proA: 0, proB: 0, neutral: 100 },
           _raw: p,
         }));
@@ -192,15 +193,23 @@ export default function NewsFeed({ onOpen, query }) {
     }
   }
 
-  // optional search filter by title/content
+    // optional search filter by title/content
   const filtered = articles.filter((a) => {
+    // 1) category filter
+    if (category && a.category !== category) {
+      return false;
+    }
+
+    // 2) search query filter
     if (!query) return true;
+
     const q = query.toLowerCase();
     return (
       a.title.toLowerCase().includes(q) ||
       a.summary.toLowerCase().includes(q)
     );
   });
+
 
   return (
     <div className="space-y-4">

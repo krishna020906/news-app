@@ -42,6 +42,7 @@ const sampleArticles = [
 export default function MainPage() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
+  const [category, setCategory] = useState(null);
   const router = useRouter()
 
   return (
@@ -93,10 +94,17 @@ export default function MainPage() {
 
         {/* MAIN FEED */}
         <section className="md:col-span-2 space-y-4">
-          <FilterChips />
+          <FilterChips 
+            selectedCategory={category}
+            onChange={(value) => {
+              console.log("Category state set to:", value); // 🔍 debug
+              setCategory(value);
+            }}
+          />
 
           <NewsFeed
             query={query}
+            category={category}
             onOpen={(article) => {
               // go to /news/[id]
               router.push(`/news/${article.id}`);
