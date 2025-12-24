@@ -43,6 +43,10 @@ export default function MainPage() {
               setCategory(value);
             }}
           />
+          {/* <div className="text-green-500 text-xl">
+            PARENT RENDERING CONTENT
+          </div> */}
+
 
           <NewsFeed
             mode={mode}          // 👈 NEW

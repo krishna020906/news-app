@@ -1,4 +1,3 @@
-// components/NewsFeed.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,34 +5,38 @@ import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
 import ArticleCard from "./ArticleCard";
 
-// simple "time ago" formatter
-function formatTimeAgo(iso) {
-  if (!iso) return "";
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  return new Date(iso).toLocaleDateString();
-}
 
-// take first ~40 words as summary
-function makeSummary(content) {
-  if (!content) return "";
-  const words = content.trim().split(/\s+/);
-  if (words.length <= 40) return content;
-  return words.slice(0, 40).join(" ") + "…";
-}
 
 export default function NewsFeed({ onOpen, query, category, mode }) {
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [authChecking, setAuthChecking] = useState(true);
+  const [user, setUser] = useState(null);
+  console.log("🔥 NewsFeed rendered with articles:", articles.length);
 
+  /* 🔐 AUTH — ONCE */
   useEffect(() => {
+    console.log("[AUTH] subscribing");
+
+    const auth = getAuth();
+    const unsub = auth.onAuthStateChanged((u) => {
+      console.log("[AUTH] resolved", !!u);
+      setUser(u);
+      setAuthChecking(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  /* 📰 FETCH — AFTER AUTH */
+  useEffect(() => {
+    if (authChecking) {
+      console.log("[FETCH] waiting for auth");
+      return;
+    }
+
+    console.log("[FETCH] start");
     let cancelled = false;
 
     async function load() {
@@ -42,175 +45,460 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
         setError("");
 
         let url = "/api/news";
-        let fetchOptions = {};
+        let options = {};
 
-        if (mode === "for-you") {
-          // personalised feed requires auth
-          const auth = getAuth();
-          const user = auth.currentUser;
-
-          if (!user) {
-            // if not logged in, fall back to top headlines
-            console.warn(
-              "Not logged in, falling back to top headlines instead of personalised feed."
-            );
-          } else {
-            const idToken = await user.getIdToken();
-            url = "/api/news/for-you";
-            fetchOptions = {
-              headers: {
-                Authorization: `Bearer ${idToken}`,
-              },
-            };
-          }
+        if (mode === "for-you" && user) {
+          const token = await user.getIdToken();
+          url = "/api/news/for-you";
+          options.headers = {
+            Authorization: `Bearer ${token}`,
+          };
         }
 
-        const res = await fetch(url, fetchOptions);
+        const res = await fetch(url, options);
         const data = await res.json();
 
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "Failed to load news");
         }
 
-        const posts = data.posts || data.news || data.items || [];
-
-        const mapped = posts.map((p) => ({
-          id: p.id || p._id || p.newsId,
-          source: p.category || "Top Headlines",
-          title: p.title,
-          summary: makeSummary(p.content),
-          image: p.mediaUrl || null,
-          time: formatTimeAgo(p.createdAt),
-          comments: p.commentsCount || 0,
-          shares: 0,
-          likes: p.likesCount || 0,
-          dislikes: p.dislikesCount || 0,
-          category: p.category || "general",
-          bias: { proA: 0, proB: 0, neutral: 100 },
-          _raw: p,
-        }));
-
         if (!cancelled) {
-          setArticles(mapped);
+          setArticles(data.posts || []);
         }
-      } catch (err) {
-        console.error(err);
-        if (!cancelled) {
-          setError(err.message || "Failed to load news");
-        }
+      } catch (e) {
+        if (!cancelled) setError(e.message);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
     load();
-
     return () => {
       cancelled = true;
     };
-  }, [mode]); // 👈 reload when switching top <-> for-you
+  }, [authChecking, mode, user]);
 
-  // like/dislike handler unchanged
-  async function handleReact(postId, type) {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("User not logged in, cannot react");
-        return;
-      }
-
-      const idToken = await user.getIdToken();
-
-      const res = await fetch(`/api/news/${postId}/reaction`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ type }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to react");
-      }
-
-      setArticles((prev) =>
-        prev.map((a) =>
-          a.id === postId
-            ? {
-                ...a,
-                likes: data.post.likesCount,
-                dislikes: data.post.dislikesCount,
-              }
-            : a
-        )
-      );
-    } catch (err) {
-      console.error("Reaction error:", err);
-    }
+  /* 🧱 UI STATES */
+  if (authChecking) {
+    return <div className="card p-4 animate-pulse h-24" />;
   }
 
-  // filter by category + search query
-  const filtered = articles.filter((a) => {
-    if (category && a.category !== category) {
-      return false;
-    }
-    if (!query) return true;
-    const q = query.toLowerCase();
-    return (
-      a.title.toLowerCase().includes(q) ||
-      a.summary.toLowerCase().includes(q)
-    );
-  });
-
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        <div className="card p-4 animate-pulse">
-          <div className="h-4 w-1/3 bg-gray-600 rounded mb-2" />
-          <div className="h-3 w-2/3 bg-gray-700 rounded" />
-        </div>
-        <div className="card p-4 animate-pulse">
-          <div className="h-4 w-1/2 bg-gray-600 rounded mb-2" />
-          <div className="h-3 w-full bg-gray-700 rounded" />
-        </div>
-      </div>
-    );
+  if (loading && articles.length === 0) {
+    return <div className="card p-4 animate-pulse h-24" />;
   }
 
   if (error) {
-    return (
-      <div className="card p-4">
-        <p className="card-body text-red-400 text-sm">
-          Failed to load news: {error}
-        </p>
-      </div>
-    );
-  }
-
-  if (filtered.length === 0) {
-    return (
-      <div className="card p-4">
-        <p className="card-body text-sm">No news found.</p>
-      </div>
-    );
+    return <div className="card p-4 text-red-400">{error}</div>;
   }
 
   return (
     <div className="space-y-4">
-      {filtered.map((a) => (
+      {articles.map((a) => (
         <ArticleCard
-          key={a.id}
+          key={a._id || a.id}
           article={a}
-          onOpen={(art) => onOpen(art)}
-          onReact={(type) => handleReact(a.id, type)}
+          onOpen={onOpen}
         />
       ))}
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // components/NewsFeed.jsx
+// "use client";
+
+
+// import { getAuth } from "firebase/auth";
+// import "@/backend/firebase/config";
+// import ArticleCard from "./ArticleCard";
+// import { useEffect, useState, useRef } from "react";
+
+
+// // simple "time ago" formatter
+// function formatTimeAgo(iso) {
+//   if (!iso) return "";
+//   const diffMs = Date.now() - new Date(iso).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+//   const diffDays = Math.floor(diffHours / 24);
+//   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+//   return new Date(iso).toLocaleDateString();
+// }
+
+// // take first ~40 words as summary
+// function makeSummary(content) {
+//   if (!content) return "";
+//   const words = content.trim().split(/\s+/);
+//   if (words.length <= 40) return content;
+//   return words.slice(0, 40).join(" ") + "…";
+// }
+
+// export default function NewsFeed({ onOpen, query, category, mode }) {
+//   console.log("[RENDER] NewsFeed render", {
+//     mode,
+//   });
+//   const [articles, setArticles] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+//   const [authChecking, setAuthChecking] = useState(true);
+//   const [user, setUser] = useState(null);
+//   const hasFetchedRef = useRef(false);
+
+ 
+
+
+
+
+
+//   useEffect(() => {
+//     console.log("[AUTH EFFECT] subscribing to auth state");
+
+//     const auth = getAuth();
+
+//     const unsub = auth.onAuthStateChanged((u) => {
+//       console.log("[AUTH STATE CHANGED]", u ? "LOGGED IN" : "LOGGED OUT");
+//       setUser(u);
+//       setAuthChecking(false);
+//     });
+
+//     return () => {
+//       console.log("[AUTH EFFECT] unsubscribed");
+//       unsub();
+//     };
+//   }, []);
+
+//   useEffect(() => {
+//     console.log("[FETCH EFFECT] triggered");
+
+//     if (hasFetchedRef.current) {
+//       console.log("[FETCH EFFECT] already fetched, skipping");
+//       return;
+//     }
+
+//     hasFetchedRef.current = true;
+//   } , []);
+
+//   useEffect(() => {
+//     const auth = getAuth();
+
+//     const unsub = auth.onAuthStateChanged((u) => {
+//       setUser(u);
+//       setAuthChecking(false);
+//     });
+
+//     return () => unsub();
+//   }, []);
+
+//   useEffect(() => {
+//     if (hasFetchedRef.current) return;
+//     hasFetchedRef.current = true;
+
+//     let cancelled = false;
+
+
+
+//     async function load() {
+//       console.log("[LOAD] start");
+
+//       try {
+//         setLoading(true);
+//         console.log("[LOAD] setLoading(true)");
+
+//         let url = "/api/news";
+//         let fetchOptions = {};
+
+//         if (mode === "for-you") {
+//           console.log("[LOAD] for-you mode");
+
+//           const auth = getAuth();
+
+//           await new Promise((resolve) => {
+//             const unsub = auth.onAuthStateChanged((user) => {
+//               console.log("[LOAD] auth resolved inside fetch", user ? "YES" : "NO");
+//               unsub();
+//               resolve(user);
+//             });
+//           });
+
+//           const user = auth.currentUser;
+
+//           console.log("[LOAD] currentUser", user);
+
+//           setAuthChecking(false);
+
+//           if (user) {
+//             const idToken = await user.getIdToken();
+//             console.log("[LOAD] got idToken");
+
+//             url = "/api/news/for-you";
+//             fetchOptions = {
+//               headers: {
+//                 Authorization: `Bearer ${idToken}`,
+//               },
+//             };
+//           } else {
+//             console.warn("[LOAD] no user, fallback to top headlines");
+//           }
+//         } else {
+//           console.log("[LOAD] top headlines mode");
+//           setAuthChecking(false);
+//         }
+
+//         console.log("[LOAD] fetching", url);
+
+//         const res = await fetch(url, fetchOptions);
+//         const data = await res.json();
+
+//         console.log("[LOAD] response", { ok: res.ok, data });
+
+//         if (!res.ok || !data.ok) {
+//           throw new Error(data.error || "Failed to load news");
+//         }
+
+//         const posts = data.posts || [];
+//         console.log("[LOAD] posts length", posts.length);
+
+//         if (!cancelled) {
+//           setArticles(posts);
+//           console.log("[LOAD] setArticles");
+//         }
+//       } catch (err) {
+//         console.error("[LOAD ERROR]", err);
+//         if (!cancelled) setError(err.message);
+//       } finally {
+//         if (!cancelled) {
+//           setLoading(false);
+//           console.log("[LOAD] setLoading(false)");
+//         }
+//       }
+//     }
+
+
+//     // async function load() {
+//     //   try {
+//     //     setLoading(true);
+//     //     setError("");
+
+//     //     let url = "/api/news";
+//     //     let fetchOptions = {};
+
+//     //     if (mode === "for-you") {
+//     //       const auth = getAuth();
+
+//     //       await new Promise((resolve) => {
+//     //         const unsub = auth.onAuthStateChanged((user) => {
+//     //           unsub();
+//     //           resolve(user);
+//     //         });
+//     //       });
+
+//     //       const user = auth.currentUser;
+
+//     //       setAuthChecking(false);
+
+//     //       if (user) {
+//     //         const idToken = await user.getIdToken();
+//     //         url = "/api/news/for-you";
+//     //         fetchOptions = {
+//     //           headers: {
+//     //             Authorization: `Bearer ${idToken}`,
+//     //           },
+//     //         };
+//     //       } else {
+//     //         console.warn(
+//     //           "Not logged in, falling back to top headlines instead of personalised feed."
+//     //         );
+//     //       }
+//     //     } else {
+//     //       setAuthChecking(false);
+//     //     }
+
+
+//     //     const res = await fetch(url, fetchOptions);
+//     //     const data = await res.json();
+
+//     //     if (!res.ok || !data.ok) {
+//     //       throw new Error(data.error || "Failed to load news");
+//     //     }
+
+//     //     const posts = data.posts || [];
+
+//     //     const mapped = posts.map((p) => ({
+//     //       id: p.id || p._id,
+//     //       source: p.category || "Top Headlines",
+//     //       title: p.title,
+//     //       summary: makeSummary(p.content),
+//     //       image: p.mediaUrl || null,
+//     //       time: formatTimeAgo(p.createdAt),
+//     //       comments: p.commentsCount || 0,
+//     //       shares: 0,
+//     //       likes: p.likesCount || 0,
+//     //       dislikes: p.dislikesCount || 0,
+//     //       category: p.category || "general",
+//     //       bias: { proA: 0, proB: 0, neutral: 100 },
+//     //       _raw: p,
+//     //     }));
+
+//     //     if (!cancelled) {
+//     //       setArticles(mapped);
+//     //     }
+//     //   } catch (err) {
+//     //     console.error(err);
+//     //     if (!cancelled) {
+//     //       setError(err.message || "Failed to load news");
+//     //     }
+//     //   } finally {
+//     //     if (!cancelled) setLoading(false);
+//     //   }
+//     // }
+
+//     load();
+
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, []); // 👈 reload when switching top <-> for-you
+
+//   // like/dislike handler unchanged
+//   async function handleReact(postId, type) {
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+//       if (!user) {
+//         console.error("User not logged in, cannot react");
+//         return;
+//       }
+
+//       const idToken = await user.getIdToken();
+
+//       const res = await fetch(`/api/news/${postId}/reaction`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${idToken}`,
+//         },
+//         body: JSON.stringify({ type }),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok || !data.ok) {
+//         throw new Error(data.error || "Failed to react");
+//       }
+
+//       setArticles((prev) =>
+//         prev.map((a) =>
+//           a.id === postId
+//             ? {
+//                 ...a,
+//                 likes: data.post.likesCount,
+//                 dislikes: data.post.dislikesCount,
+//               }
+//             : a
+//         )
+//       );
+//     } catch (err) {
+//       console.error("Reaction error:", err);
+//     }
+//   }
+
+//   // filter by category + search query
+//   const filtered = articles.filter((a) => {
+//     if (category && a.category !== category) {
+//       return false;
+//     }
+//     if (!query) return true;
+//     const q = query.toLowerCase();
+//     return (
+//       a.title.toLowerCase().includes(q) ||
+//       a.summary.toLowerCase().includes(q)
+//     );
+//   });
+//     // ⏳ Waiting for Firebase auth to resolve
+//   if (authChecking) {
+//     return (
+//       <div className="space-y-3">
+//         <div className="card p-4 animate-pulse h-24" />
+//         <div className="card p-4 animate-pulse h-24" />
+//         <div className="card p-4 animate-pulse h-24" />
+//       </div>
+//     );
+//   }
+
+
+//   if (loading) {
+//     if (authChecking) {
+//       console.log("[RENDER] authChecking = true → auth skeleton");
+//     if (loading) {
+//       console.log("[RENDER] loading = true → loading skeleton");
+
+//     return (
+//       <div className="space-y-3">
+//         <div className="card p-4 animate-pulse">
+//           <div className="h-4 w-1/3 bg-gray-600 rounded mb-2" />
+//           <div className="h-3 w-2/3 bg-gray-700 rounded" />
+//         </div>
+//         <div className="card p-4 animate-pulse">
+//           <div className="h-4 w-1/2 bg-gray-600 rounded mb-2" />
+//           <div className="h-3 w-full bg-gray-700 rounded" />
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="card p-4">
+//         <p className="card-body text-red-400 text-sm">
+//           Failed to load news: {error}
+//         </p>
+//       </div>
+//     );
+//   }
+
+//   if (filtered.length === 0) {
+//     return (
+//       <div className="card p-4">
+//         <p className="card-body text-sm">No news found.</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-4">
+//       {filtered.map((a) => (
+//         <ArticleCard
+//           key={a.id}
+//           article={a}
+//           onOpen={(art) => onOpen(art)}
+//           onReact={(type) => handleReact(a.id, type)}
+//         />
+//       ))}
+//     </div>
+//   );
+// }
 
 
 

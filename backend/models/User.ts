@@ -38,6 +38,20 @@ const UserSchema = new mongoose.Schema(
       min: 13,
       max: 120,
     },
+    // savedNews: [
+    // {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "News",
+    // },
+
+
+  savedNews: {
+    type: [String],
+    default: [],
+  },
+
+  
+
 
     // Optional profile info (e.g. from Firebase or your own profile form)
     photoUrl: {
