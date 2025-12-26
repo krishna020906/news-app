@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
-import ArticleCard from "@/components/ArticleCard";
+import ArticleCard from "../components/ArticleCard";
 
 export default function SavedPage() {
   const [saved, setSaved] = useState([]);

@@ -4,51 +4,100 @@ import User from "@/backend/models/User";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1️⃣ Verify user
-    const { decoded } = await requireAuth(req);
-    const newsId = params.id;
+    const { id } = await context.params; // ✅ FIX
 
+    const { decoded } = await requireAuth(req);
     await connectToDatabase();
 
-    // 2️⃣ Fetch user
     const user = await User.findOne({ uid: decoded.uid });
     if (!user) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // 3️⃣ Safety: ensure array exists
-    if (!Array.isArray(user.savedNews)) {
-      user.savedNews = [];
-    }
-
-    // 4️⃣ Toggle save
-    const alreadySaved = user.savedNews.includes(newsId);
+    const alreadySaved = user.savedNews.includes(id);
 
     if (alreadySaved) {
-      user.savedNews = user.savedNews.filter((id: string) => id !== newsId);
-
+      user.savedNews = user.savedNews.filter((nid) => nid !== id);
     } else {
-      user.savedNews.push(newsId);
+      user.savedNews.push(id);
     }
 
-    // 5️⃣ Persist
     await user.save();
 
     return Response.json({
       ok: true,
       saved: !alreadySaved,
     });
-  } catch (err: any) {
-    console.error("Save news error:", err);
+  } catch (err) {
+    console.error("Save error:", err);
     return Response.json(
-      { error: err.message || "Something went wrong" },
+      { error: "Failed to save news" },
       { status: 500 }
     );
   }
 }
+
+
+
+
+
+
+
+
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import User from "@/backend/models/User";
+
+// export async function POST(
+//   req: Request,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     // 1️⃣ Verify user
+//     const { decoded } = await requireAuth(req);
+//     const { id } =  await context.params;
+
+//     await connectToDatabase();
+
+//     // 2️⃣ Fetch user
+//     const user = await User.findOne({ uid: decoded.uid });
+//     if (!user) {
+//       return Response.json({ error: "User not found" }, { status: 404 });
+//     }
+
+//     // 3️⃣ Safety: ensure array exists
+//     if (!Array.isArray(user.savedNews)) {
+//       user.savedNews = [];
+//     }
+
+//     // 4️⃣ Toggle save
+//     const alreadySaved = user.savedNews.includes(id);
+
+//     if (alreadySaved) {
+//       user.savedNews = user.savedNews.filter((id: string) => id !== id);
+
+//     } else {
+//       user.savedNews.push(id);
+//     }
+
+//     // 5️⃣ Persist
+//     await user.save();
+
+//     return Response.json({
+//       ok: true,
+//       saved: !alreadySaved,
+//     });
+//   } catch (err: any) {
+//     console.error("Save news error:", err);
+//     return Response.json(
+//       { error: err.message || "Something went wrong" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

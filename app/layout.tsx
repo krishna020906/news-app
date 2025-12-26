@@ -1,10 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-<ToastContainer position="bottom-right" />
+import ToastProvider from "./components/ToastProvider";
 
 
 const setInitialTheme = `
@@ -56,6 +53,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <ToastProvider/>
       </body>
     </html>
   );

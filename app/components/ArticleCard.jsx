@@ -12,6 +12,7 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
 
   async function toggleSave(e) {
     e.stopPropagation();
+
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -21,7 +22,6 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
       }
 
       const token = await user.getIdToken();
-
       const res = await fetch(`/api/news/${article.id}/save`, {
         method: "POST",
         headers: {
@@ -30,12 +30,11 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error);
 
       setIsSaved(data.saved);
-      toast.success(data.saved ? "News saved" : "Removed from saved");
+      toast.success(data.saved ? "Saved" : "Removed from saved");
     } catch (err) {
-      console.error(err);
       toast.error("Something went wrong");
     }
   }
@@ -50,7 +49,7 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
         {article.mediaUrl ? (
           <img
             src={article.mediaUrl}
-            alt={article.title || "news"}
+            alt={article.title}
             className="object-cover w-full h-full"
           />
         ) : (
@@ -81,10 +80,9 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
 
         <BiasMeter bias={article.bias || { proA: 0, proB: 0, neutral: 100 }} />
 
-        {/* FOOTER ACTIONS */}
+        {/* ACTION ROW */}
         <div className="mt-4 flex items-center justify-between text-sm card-body">
           <div className="flex gap-4 items-center">
-            {/* LIKE */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -95,7 +93,6 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
               👍 <span>{article.likesCount ?? 0}</span>
             </button>
 
-            {/* DISLIKE */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -106,7 +103,6 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
               👎 <span>{article.dislikesCount ?? 0}</span>
             </button>
 
-            {/* COMMENTS */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -117,16 +113,14 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
               💬 <span>{article.commentsCount ?? 0}</span>
             </button>
 
-            {/* SAVE (NEW POSITION) */}
+            {/* SAVE BUTTON */}
             <button
               onClick={toggleSave}
               className="flex items-center gap-2 hover:opacity-80"
-              title={isSaved ? "Remove from saved" : "Save news"}
             >
               {isSaved ? "🔖" : "📑"}
             </button>
 
-            {/* TIME */}
             <span className="opacity-70">
               ·{" "}
               {article.createdAt
@@ -135,7 +129,6 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
             </span>
           </div>
 
-          {/* READ BUTTON */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -154,6 +147,172 @@ export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
     </article>
   );
 }
+
+
+
+
+
+
+
+
+
+
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import { toast } from "react-toastify";
+// import BiasMeter from "./BiasMeter";
+
+// export default function ArticleCard({ article, onOpen = () => {}, onReact }) {
+//   const [isSaved, setIsSaved] = useState(false);
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//   }, [article]);
+
+//   async function toggleSave(e) {
+//     e.stopPropagation();
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok || !data.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//       toast.success(data.saved ? "News saved" : "Removed from saved");
+//     } catch (err) {
+//       console.error(err);
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <article
+//       className="card overflow-hidden cursor-pointer"
+//       onClick={() => onOpen(article)}
+//     >
+//       {/* IMAGE */}
+//       <div className="relative h-44 md:h-56 lg:h-44">
+//         {article.mediaUrl ? (
+//           <img
+//             src={article.mediaUrl}
+//             alt={article.title || "news"}
+//             className="object-cover w-full h-full"
+//           />
+//         ) : (
+//           <div className="w-full h-full bg-gray-800" />
+//         )}
+
+//         {/* CATEGORY BADGE */}
+//         <div
+//           className="absolute left-4 top-4 px-3 py-1 text-xs font-medium rounded-full"
+//           style={{
+//             background: "var(--badge-bg)",
+//             backdropFilter: "blur(6px)",
+//           }}
+//         >
+//           {article.category || "Top Headlines"}
+//         </div>
+//       </div>
+
+//       {/* CONTENT */}
+//       <div className="p-4">
+//         <h3 className="card-title text-lg font-semibold line-clamp-2">
+//           {article.title}
+//         </h3>
+
+//         <p className="card-body mt-2 text-sm line-clamp-3">
+//           {article.content}
+//         </p>
+
+//         <BiasMeter bias={article.bias || { proA: 0, proB: 0, neutral: 100 }} />
+
+//         {/* FOOTER ACTIONS */}
+//         <div className="mt-4 flex items-center justify-between text-sm card-body">
+//           <div className="flex gap-4 items-center">
+//             {/* LIKE */}
+//             <button
+//               onClick={(e) => {
+//                 e.stopPropagation();
+//                 onReact && onReact("like");
+//               }}
+//               className="flex items-center gap-2 hover:opacity-80"
+//             >
+//               👍 <span>{article.likesCount ?? 0}</span>
+//             </button>
+
+//             {/* DISLIKE */}
+//             <button
+//               onClick={(e) => {
+//                 e.stopPropagation();
+//                 onReact && onReact("dislike");
+//               }}
+//               className="flex items-center gap-2 hover:opacity-80"
+//             >
+//               👎 <span>{article.dislikesCount ?? 0}</span>
+//             </button>
+
+//             {/* COMMENTS */}
+//             <button
+//               onClick={(e) => {
+//                 e.stopPropagation();
+//                 onOpen(article);
+//               }}
+//               className="flex items-center gap-2 hover:opacity-80"
+//             >
+//               💬 <span>{article.commentsCount ?? 0}</span>
+//             </button>
+
+//             {/* SAVE (NEW POSITION) */}
+//             <button
+//               onClick={toggleSave}
+//               className="flex items-center gap-2 hover:opacity-80"
+//               title={isSaved ? "Remove from saved" : "Save news"}
+//             >
+//               {isSaved ? "🔖" : "📑"}
+//             </button>
+
+//             {/* TIME */}
+//             <span className="opacity-70">
+//               ·{" "}
+//               {article.createdAt
+//                 ? new Date(article.createdAt).toLocaleDateString()
+//                 : ""}
+//             </span>
+//           </div>
+
+//           {/* READ BUTTON */}
+//           <button
+//             onClick={(e) => {
+//               e.stopPropagation();
+//               onOpen(article);
+//             }}
+//             className="px-3 py-1 rounded-full text-sm"
+//             style={{
+//               background: "var(--button-bg)",
+//               color: "var(--button-text)",
+//             }}
+//           >
+//             Read
+//           </button>
+//         </div>
+//       </div>
+//     </article>
+//   );
+// }
 
 
 // import { getAuth } from "firebase/auth";
