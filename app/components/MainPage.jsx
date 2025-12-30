@@ -1,3 +1,5 @@
+
+
 // components/MainPage.jsx
 "use client";
 
@@ -10,18 +12,60 @@ import ArticleModal from "./ArticleModal";
 import NewsFeed from "./NewsFeed";
 import LeftSidebar from "./LeftSidebar";
 import { useRouter, useSearchParams } from "next/navigation";
+import StreakWidget from "./StreakWidget"
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useEffect } from "react";
+import TrendingWidget from "./TrendingWidget"
+
+
 
 const sampleArticles = [ /* your sample data here */ ];
 
 export default function MainPage() {
+  const [streak, setStreak] = useState(0);
+
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
+
   const tab = searchParams.get("tab"); // "top" or null
   const mode = tab === "top" ? "top" : "for-you"; // 👈 default personalised
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsub = auth.onAuthStateChanged((u) => {
+      setUser(u);
+    });
+
+    return () => unsub();
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchStreak() {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/user/streak", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setStreak(data.streak ?? 0);
+      } catch (err) {
+        console.error("Failed to fetch streak", err);
+      }
+    }
+
+    fetchStreak();
+  }, [user]);
+
+
 
   return (
     <div
@@ -58,8 +102,12 @@ export default function MainPage() {
           />
         </section>
 
-        <aside className="hidden lg:block w-72">
-          <Recommendation items={sampleArticles} />
+        <aside className="hidden lg:block w-72 space-y-4">
+          <TrendingWidget />
+          {/* <Recommendation items={sampleArticles} /> */}
+          {user && <StreakWidget streak={streak} />}
+
+
         </aside>
       </main>
 

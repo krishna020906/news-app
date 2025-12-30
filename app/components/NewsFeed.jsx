@@ -4,6 +4,36 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
 import ArticleCard from "./ArticleCard";
+function ArticleSkeleton() {
+  return (
+    <div className="card p-4 animate-[pulse_2s_ease-in-out_infinite]">
+      {/* Image placeholder */}
+      <div className="h-40 w-full bg-gray-700 rounded mb-4" />
+
+      {/* Title */}
+      <div className="h-4 bg-gray-600 rounded w-3/4 mb-2" />
+
+      {/* Description lines */}
+      <div className="space-y-2">
+        <div className="h-3 bg-gray-600 rounded w-full" />
+        <div className="h-3 bg-gray-600 rounded w-5/6" />
+        <div className="h-3 bg-gray-600 rounded w-2/3" />
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 flex justify-between items-center">
+        <div className="flex gap-3">
+          <div className="h-4 w-8 bg-gray-600 rounded" />
+          <div className="h-4 w-8 bg-gray-600 rounded" />
+          <div className="h-4 w-8 bg-gray-600 rounded" />
+        </div>
+
+        <div className="h-6 w-16 bg-gray-600 rounded" />
+      </div>
+    </div>
+  );
+}
+
 
 
 
@@ -79,13 +109,16 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
   }, [authChecking, mode, user]);
 
   /* 🧱 UI STATES */
-  if (authChecking) {
-    return <div className="card p-4 animate-pulse h-24" />;
-  }
+if (authChecking || (loading && articles.length === 0)) {
+  return (
+    <div className="space-y-4">
+      <ArticleSkeleton />
+      <ArticleSkeleton />
+      <ArticleSkeleton />
+    </div>
+  );
+}
 
-  if (loading && articles.length === 0) {
-    return <div className="card p-4 animate-pulse h-24" />;
-  }
 
   if (error) {
     return <div className="card p-4 text-red-400">{error}</div>;

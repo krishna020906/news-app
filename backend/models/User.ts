@@ -49,6 +49,17 @@ const UserSchema = new mongoose.Schema(
     type: [String],
     default: [],
   },
+  streakCount: {
+    type: Number,
+    default: 0
+  },
+  lastReadAt: {
+    type: Date,
+    default: null
+  },
+
+
+
 
   
 
