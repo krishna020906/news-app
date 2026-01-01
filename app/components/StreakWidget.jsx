@@ -1,54 +1,95 @@
 export default function StreakWidget({ streak = 0 }) {
-  const STREAKS = [
-    { label: "Starter", days: 3 },
-    { label: "Builder", days: 7 },
-    { label: "Consistent", days: 15 },
-    { label: "Master", days: 30 },
-  ];
+  const levels = [3, 7, 15, 30];
+  const next = levels.find((n) => streak < n) || 30;
+  const prev = levels[levels.indexOf(next) - 1] || 0;
 
-  const current =
-    STREAKS.find((s) => streak < s.days) || STREAKS[STREAKS.length - 1];
-
-  const previous =
-    STREAKS[STREAKS.indexOf(current) - 1] || { days: 0 };
-
-  const progress =
-    ((streak - previous.days) / (current.days - previous.days)) * 100;
+  const progress = ((streak - prev) / (next - prev)) * 100;
 
   return (
-    <div
-      className="
-        fixed bottom-6 right-6 z-50
-        bg-[#111] text-white
-        px-4 py-3 rounded-xl
-        shadow-xl w-64
-        border border-white/10
-      "
-    >
+    <div className=" flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm opacity-80">🔥 Reading Streak</span>
-        <span className="text-sm font-semibold">
+        <span className="text-sm font-semibold text-white">
+          🔥 Reading Streak
+        </span>
+        <span className="text-sm text-orange-400">
           {streak} day{streak !== 1 && "s"}
         </span>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mt-2">
-        <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500"
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
+      <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500"
+          style={{ width: `${Math.min(progress, 100)}%` }}
+        />
+      </div>
 
-        <div className="flex justify-between text-[11px] text-gray-400 mt-1">
-          <span>{previous.days} days</span>
-          <span>{current.days} days</span>
-        </div>
+      <div className="text-xs text-gray-400 flex justify-between">
+        <span>{prev} days</span>
+        <span>{next} days</span>
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+// export default function StreakWidget({ streak = 0 }) {
+//   const STREAKS = [
+//     { label: "Starter", days: 3 },
+//     { label: "Builder", days: 7 },
+//     { label: "Consistent", days: 15 },
+//     { label: "Master", days: 30 },
+//   ];
+
+//   const current =
+//     STREAKS.find((s) => streak < s.days) || STREAKS[STREAKS.length - 1];
+
+//   const previous =
+//     STREAKS[STREAKS.indexOf(current) - 1] || { days: 0 };
+
+//   const progress =
+//     ((streak - previous.days) / (current.days - previous.days)) * 100;
+
+//   return (
+//     <div
+//       className="
+//         fixed bottom-6 right-6 z-50
+//         bg-[#111] text-white
+//         px-4 py-3 rounded-xl
+//         shadow-xl w-64
+//         border border-white/10 
+//       "
+//     >
+//       <div className="flex items-center justify-between">
+//         <span className="text-sm opacity-80">🔥 Reading Streak</span>
+//         <span className="text-sm font-semibold">
+//           {streak} day{streak !== 1 && "s"}
+//         </span>
+//       </div>
+
+//       {/* Progress Bar */}
+//       <div className="mt-2">
+//         <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+//           <div
+//             className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500"
+//             style={{ width: `${Math.min(progress, 100)}%` }}
+//           />
+//         </div>
+
+//         <div className="flex justify-between text-[11px] text-gray-400 mt-1">
+//           <span>{previous.days} days</span>
+//           <span>{current.days} days</span>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 
 

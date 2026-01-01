@@ -10,7 +10,7 @@ export default function TrendingWidget() {
   }, []);
 
   return (
-    <div className="bg-[#111] rounded-xl p-4 shadow-lg">
+    <div className="bg-[#111] rounded-xl p-4  shadow-lg">
       <h3 className="text-lg font-semibold mb-3">🔥 Trending Now</h3>
 
       <div className="space-y-3">
