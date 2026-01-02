@@ -91,7 +91,7 @@ export default function MainPage() {
             PARENT RENDERING CONTENT
           </div> */}
 
-
+     
           <NewsFeed
             mode={mode}          // 👈 NEW
             query={query}
@@ -100,11 +100,13 @@ export default function MainPage() {
               router.push(`/news/${article.id}`);
             }}
           />
+          
+          
         </section>
 
     
         
-          <aside className="hidden xl:flex flex-col justify-between w-[320px] sticky top-20 h-[calc(100vh-5rem)]">
+          <aside className="  hidden xl:flex flex-col justify-between w-[320px] sticky top-20 h-[calc(100vh-5rem)]">
 
             {/* TOP SECTION */}
             <div className="space-y-4">

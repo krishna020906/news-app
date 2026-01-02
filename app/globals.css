@@ -24,6 +24,37 @@
   50% { opacity: 0.4; }
   100% { opacity: 1; }
 }
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* smooth scroll shadows */
+.scroll-container::before,
+.scroll-container::after {
+  content: "";
+  position: sticky;
+  height: 16px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.scroll-container::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+}
+
+.scroll-container::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+}
 
 
 /* DARK THEME */
