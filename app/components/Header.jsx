@@ -1,7 +1,15 @@
-// File: components/Header.jsx
-"use clien"
-import React from 'react';
 
+
+
+
+
+
+
+
+// File: components/Header.jsx
+"use client"
+import React , {useState} from 'react';
+import { useRouter } from 'next/navigation';
 import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
 import SignUp from './SignUp'
@@ -11,7 +19,13 @@ import ProfileButton from './ProfileButton'
 
 
 export default function Header({ onSearch }) {
+  const [query, setQuery] = useState("");
+  const router = useRouter();
 
+  function runSearch() {
+    if (!query.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+  }
   return (
     <header
       className="sticky top-0 z-20 border-b"
@@ -45,8 +59,13 @@ export default function Header({ onSearch }) {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <SearchBar onChange={onSearch} />
+          <SearchBar             
+            value={query}
+            onChange={setQuery}
+            onSubmit={runSearch}
+          />
           <button
+            onClick={runSearch}
             className="px-3 py-2 rounded-md"
             style={{
               border: "1px solid var(--card-border)",
@@ -85,7 +104,11 @@ export default function Header({ onSearch }) {
 
       {/* Mobile Search */}
       <div className="md:hidden px-4 pb-3">
-        <SearchBar onChange={onSearch} mobile />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          onSubmit={runSearch}
+        />
       </div>
     </header>
   );
