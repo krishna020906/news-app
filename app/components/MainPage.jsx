@@ -24,16 +24,24 @@ const sampleArticles = [ /* your sample data here */ ];
 export default function MainPage() {
   const [streak, setStreak] = useState(0);
 
-  const [query, setQuery] = useState("");
+  
+  
+
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  // const initialQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState("");
 
 
   const tab = searchParams.get("tab"); // "top" or null
   const mode = tab === "top" ? "top" : "for-you"; // 👈 default personalised
   const [user, setUser] = useState(null);
+  useEffect(() => {
+    console.log("[MAINPAGE] query updated:", query);
+  }, [query]);
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -64,6 +72,15 @@ export default function MainPage() {
 
     fetchStreak();
   }, [user]);
+  // useEffect(() => {
+  //   if (!query) {
+  //     router.replace("/");
+  //     return;
+  //   }
+
+  //   router.replace(`/?q=${encodeURIComponent(query)}`);
+  // }, [query]);
+
 
 
 
@@ -75,7 +92,11 @@ export default function MainPage() {
         color: "var(--text-title)",
       }}
     >
-      <Header onSearch={(q) => setQuery(q)} />
+      <Header
+        
+        onSearch={(q) => setQuery(q)}
+      />
+
 
       <main className="max-w-6xl mx-auto px-4 py-6 flex gap-6">
         <LeftSidebar />

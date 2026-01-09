@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
 import ArticleCard from "./ArticleCard";
+
 function ArticleSkeleton() {
+  
+
   return (
     <div className="card p-4 animate-[pulse_2s_ease-in-out_infinite]">
       {/* Image placeholder */}
@@ -38,6 +41,8 @@ function ArticleSkeleton() {
 
 
 export default function NewsFeed({ onOpen, query, category, mode }) {
+  console.log("[NEWSFEED] component rendered with query:", query);
+
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,25 +70,65 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
       console.log("[FETCH] waiting for auth");
       return;
     }
+    console.log("[NEWSFEED] useEffect fired");
+    console.log("[NEWSFEED] query used for fetch:", query); // ✅ HERE
 
     console.log("[FETCH] start");
     let cancelled = false;
+    console.log("[NEWSFEED] fetching with query:", query);
+
 
     async function load() {
       try {
         setLoading(true);
         setError("");
-
         let url = "/api/news";
         let options = {};
 
-        if (mode === "for-you" && user) {
+        // 🔴 SEARCH HAS ABSOLUTE PRIORITY
+        if (query && query.trim().length > 0) {
+          console.log("[NEWSFEED] SEARCH MODE ACTIVE");
+          url = `/api/search?q=${encodeURIComponent(query)}`;
+        }
+
+        // 🟢 FOR-YOU ONLY WHEN NOT SEARCHING
+        else if (mode === "for-you" && user) {
+          console.log("[NEWSFEED] FOR-YOU MODE");
           const token = await user.getIdToken();
           url = "/api/news/for-you";
           options.headers = {
             Authorization: `Bearer ${token}`,
           };
         }
+
+        // 🟡 ELSE = NORMAL FEED (/api/news)
+
+
+        // let url = "/api/news";
+        // let options = {};
+        
+        // // 🔍 SEARCH HAS HIGHEST PRIORITY
+        // if (query && query.trim().length > 0) {
+        //   console.log("[NEWSFEED] SEARCH API HIT with:", query); // ✅ HERE
+        //   url = `/api/search?q=${encodeURIComponent(query)}`;
+        // }
+        // // 🎯 For-you only when NOT searching
+        // else if (mode === "for-you" && user) {
+        //   const token = await user.getIdToken();
+        //   url = "/api/news/for-you";
+        //   options.headers = {
+        //     Authorization: `Bearer ${token}`,
+        //   };
+        // }
+
+
+        // if (mode === "for-you" && user) {
+        //   const token = await user.getIdToken();
+        //   url = "/api/news/for-you";
+        //   options.headers = {
+        //     Authorization: `Bearer ${token}`,
+        //   };
+        // }
 
         const res = await fetch(url, options);
         const data = await res.json();
@@ -93,7 +138,10 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
         }
 
         if (!cancelled) {
-          setArticles(data.posts || []);
+          // setArticles(data.posts || []);
+          const items = data.posts ?? data.results ?? [];
+          setArticles(items);
+
         }
       } catch (e) {
         if (!cancelled) setError(e.message);
@@ -106,7 +154,7 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
     return () => {
       cancelled = true;
     };
-  }, [authChecking, mode, user]);
+  }, [authChecking, mode, user, query]);
 
   /* 🧱 UI STATES */
 if (authChecking || (loading && articles.length === 0)) {
@@ -123,9 +171,24 @@ if (authChecking || (loading && articles.length === 0)) {
   if (error) {
     return <div className="card p-4 text-red-400">{error}</div>;
   }
+  if (!loading && query && articles.length === 0) {
+    return (
+      <div className="card p-6 text-center opacity-70">
+        No results found for <b>{query}</b>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-4">
+      {query && (
+        <div className="text-sm opacity-70">
+          Showing results for{" "}
+          <span className="font-semibold">“{query}”</span>
+        </div>
+      )}
+
       {articles.map((a) => (
         <ArticleCard
           key={a._id || a.id}
@@ -135,6 +198,7 @@ if (authChecking || (loading && articles.length === 0)) {
       ))}
     </div>
   );
+
 }
 
 
