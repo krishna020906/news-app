@@ -57,6 +57,16 @@ const UserSchema = new mongoose.Schema(
     type: Date,
     default: null
   },
+  
+  followers: {
+    type: [String], // user uids following THIS user
+    default: [],
+  },
+
+  followingCreators: {
+    type: [String], // creator uids this user follows
+    default: [],
+  },
 
 
 

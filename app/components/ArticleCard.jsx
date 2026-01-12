@@ -1,15 +1,52 @@
+// ARTICLECARD.JSX
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
-import BiasMeter from "./BiasMeter";
 
 export default function ArticleCard({ article }) {
   const [isSaved, setIsSaved] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(article.isFollowingAuthor);
+  const [followersCount, setFollowersCount] = useState(
+    article.authorFollowersCount || 0
+  );
 
   useEffect(() => {
     setIsSaved(article.isSaved || false);
+    setIsFollowing(article.isFollowingAuthor);
+    setFollowersCount(article.authorFollowersCount || 0);
   }, [article]);
+
+  async function toggleFollow(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        toast.info("Login to follow creators");
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const res = await fetch(
+        `/api/creators/${article.authorUid}/follow`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setIsFollowing(data.following);
+      setFollowersCount(data.followersCount);
+    } catch {
+      toast.error("Failed to update subscription");
+    }
+  }
 
   async function toggleSave(e) {
     e.preventDefault();
@@ -34,29 +71,19 @@ export default function ArticleCard({ article }) {
 
       setIsSaved(data.saved);
       toast.success(data.saved ? "Saved" : "Removed");
-    } catch (err) {
+    } catch {
       toast.error("Something went wrong");
     }
   }
 
   return (
     <Link href={`/news/${article.id}`} className="block">
-      <article
-        className="
-          card overflow-hidden cursor-pointer
-          transition-all duration-200 ease-out
-          hover:-translate-y-1 hover:shadow-xl
-        "
-      >
+      <article className="card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
 
         {/* IMAGE */}
         <div className="relative h-44 md:h-56">
           {article.mediaUrl ? (
-            <img
-              src={article.mediaUrl}
-              alt={article.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
+            <img src={article.mediaUrl} alt={article.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gray-800" />
           )}
@@ -72,66 +99,41 @@ export default function ArticleCard({ article }) {
             {article.content}
           </p>
 
-          <BiasMeter bias={article.bias || { proA: 0, proB: 0, neutral: 100 }} />
+          {/* 👇 PUBLISHER ROW (replaces BiasMeter) */}
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <div className="opacity-80">
+              by <span className="font-semibold">{article.authorName || "Unknown"}</span>
+              {followersCount > 0 && (
+                <span className="ml-1 opacity-60">
+                  · {followersCount} followers
+                </span>
+              )}
+            </div>
 
-          {/* ACTION BAR */}
+            <button
+              onClick={toggleFollow}
+              className="px-3 py-1 rounded-full border hover:opacity-90 transition"
+            >
+              {isFollowing ? "Follwing" : "Follow"}
+            </button>
+          </div>
+
+          {/* ACTION BAR (unchanged) */}
           <div className="mt-4 flex items-center justify-between text-sm">
             <div className="flex gap-4 items-center">
-
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                  className="
-                    flex items-center gap-2
-                    transition-transform duration-150
-                    hover:scale-110
-                    active:scale-95
-                  "
-              >
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                 👍 {article.likesCount ?? 0}
               </button>
 
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                  className="
-                    flex items-center gap-2
-                    transition-transform duration-150
-                    hover:scale-110
-                    active:scale-95
-                  "
-              >
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                 👎 {article.dislikesCount ?? 0}
               </button>
 
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                  className="
-                    flex items-center gap-2
-                    transition-transform duration-150
-                    hover:scale-110
-                    active:scale-95
-                  "
-              >
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                 💬 {article.commentsCount ?? 0}
               </button>
 
-              <button
-                onClick={toggleSave}
-                className="
-                    flex items-center gap-2
-                    transition-transform duration-150
-                    hover:scale-110
-                    active:scale-95
-                "
-              >
+              <button onClick={toggleSave}>
                 {isSaved ? "🔖" : "📑"}
               </button>
             </div>
@@ -147,6 +149,165 @@ export default function ArticleCard({ article }) {
     </Link>
   );
 }
+
+
+
+
+
+
+
+
+
+// //ARTICLECARD.JSX
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import { toast } from "react-toastify";
+// import BiasMeter from "./BiasMeter";
+
+// export default function ArticleCard({ article }) {
+//   const [isSaved, setIsSaved] = useState(false);
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//   }, [article]);
+
+//   async function toggleSave(e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//       toast.success(data.saved ? "Saved" : "Removed");
+//     } catch (err) {
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <Link href={`/news/${article.id}`} className="block">
+//       <article
+//         className="
+//           card overflow-hidden cursor-pointer
+//           transition-all duration-200 ease-out
+//           hover:-translate-y-1 hover:shadow-xl
+//         "
+//       >
+
+//         {/* IMAGE */}
+//         <div className="relative h-44 md:h-56">
+//           {article.mediaUrl ? (
+//             <img
+//               src={article.mediaUrl}
+//               alt={article.title}
+//               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+//             />
+//           ) : (
+//             <div className="w-full h-full bg-gray-800" />
+//           )}
+//         </div>
+
+//         {/* CONTENT */}
+//         <div className="p-4">
+//           <h3 className="text-lg font-semibold line-clamp-2">
+//             {article.title}
+//           </h3>
+
+//           <p className="mt-2 text-sm text-gray-400 line-clamp-3">
+//             {article.content}
+//           </p>
+
+//           <BiasMeter bias={article.bias || { proA: 0, proB: 0, neutral: 100 }} />
+
+//           {/* ACTION BAR */}
+//           <div className="mt-4 flex items-center justify-between text-sm">
+//             <div className="flex gap-4 items-center">
+
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//                   className="
+//                     flex items-center gap-2
+//                     transition-transform duration-150
+//                     hover:scale-110
+//                     active:scale-95
+//                   "
+//               >
+//                 👍 {article.likesCount ?? 0}
+//               </button>
+
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//                   className="
+//                     flex items-center gap-2
+//                     transition-transform duration-150
+//                     hover:scale-110
+//                     active:scale-95
+//                   "
+//               >
+//                 👎 {article.dislikesCount ?? 0}
+//               </button>
+
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//                   className="
+//                     flex items-center gap-2
+//                     transition-transform duration-150
+//                     hover:scale-110
+//                     active:scale-95
+//                   "
+//               >
+//                 💬 {article.commentsCount ?? 0}
+//               </button>
+
+//               <button
+//                 onClick={toggleSave}
+//                 className="
+//                     flex items-center gap-2
+//                     transition-transform duration-150
+//                     hover:scale-110
+//                     active:scale-95
+//                 "
+//               >
+//                 {isSaved ? "🔖" : "📑"}
+//               </button>
+//             </div>
+
+//             <span className="text-xs opacity-70">
+//               {article.createdAt
+//                 ? new Date(article.createdAt).toLocaleDateString()
+//                 : ""}
+//             </span>
+//           </div>
+//         </div>
+//       </article>
+//     </Link>
+//   );
+// }
 
 
 
