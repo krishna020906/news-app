@@ -142,8 +142,13 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
           // setArticles(data.posts || []);
           const items = data.posts ?? data.results ?? [];
           setArticles(items);
+          console.log("[NEWSFEED] first article keys:", Object.keys(items[0] || {}));
+          console.log("[NEWSFEED] first article:", items[0]);
 
         }
+       
+
+
       } catch (e) {
         if (!cancelled) setError(e.message);
       } finally {

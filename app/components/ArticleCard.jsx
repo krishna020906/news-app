@@ -20,6 +20,10 @@ export default function ArticleCard({ article }) {
   async function toggleFollow(e) {
     e.preventDefault();
     e.stopPropagation();
+    console.log("[FOLLOW CLICK]");
+    console.log("article.authorUid:", article.authorUid);
+    console.log("current user uid:", getAuth().currentUser?.uid);
+
 
     try {
       const auth = getAuth();
@@ -39,7 +43,15 @@ export default function ArticleCard({ article }) {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.code === "SELF_FOLLOW") {
+          toast.info("You can’t follow yourself 🙂");
+          return;
+        }
+         
+        throw new Error(data.error || "Failed to update subscription");
+      }
+
 
       setIsFollowing(data.following);
       setFollowersCount(data.followersCount);
