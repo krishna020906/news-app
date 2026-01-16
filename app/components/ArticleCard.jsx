@@ -1,64 +1,16 @@
-// ARTICLECARD.JSX
+// components/ArticleCard.jsx
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
+import FollowButton from "./FollowButton";
 
 export default function ArticleCard({ article }) {
   const [isSaved, setIsSaved] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(article.isFollowingAuthor);
-  const [followersCount, setFollowersCount] = useState(
-    article.authorFollowersCount || 0
-  );
 
   useEffect(() => {
     setIsSaved(article.isSaved || false);
-    setIsFollowing(article.isFollowingAuthor);
-    setFollowersCount(article.authorFollowersCount || 0);
   }, [article]);
-
-  async function toggleFollow(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("[FOLLOW CLICK]");
-    console.log("article.authorUid:", article.authorUid);
-    console.log("current user uid:", getAuth().currentUser?.uid);
-
-
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        toast.info("Login to follow creators");
-        return;
-      }
-
-      const token = await user.getIdToken();
-      const res = await fetch(
-        `/api/creators/${article.authorUid}/follow`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.code === "SELF_FOLLOW") {
-          toast.info("You can’t follow yourself 🙂");
-          return;
-        }
-         
-        throw new Error(data.error || "Failed to update subscription");
-      }
-
-
-      setIsFollowing(data.following);
-      setFollowersCount(data.followersCount);
-    } catch {
-      toast.error("Failed to update subscription");
-    }
-  }
 
   async function toggleSave(e) {
     e.preventDefault();
@@ -67,6 +19,7 @@ export default function ArticleCard({ article }) {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
+
       if (!user) {
         toast.info("Login to save news");
         return;
@@ -91,11 +44,14 @@ export default function ArticleCard({ article }) {
   return (
     <Link href={`/news/${article.id}`} className="block">
       <article className="card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
-
         {/* IMAGE */}
         <div className="relative h-44 md:h-56">
           {article.mediaUrl ? (
-            <img src={article.mediaUrl} alt={article.title} className="w-full h-full object-cover" />
+            <img
+              src={article.mediaUrl}
+              alt={article.title}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gray-800" />
           )}
@@ -111,37 +67,55 @@ export default function ArticleCard({ article }) {
             {article.content}
           </p>
 
-          {/* 👇 PUBLISHER ROW (replaces BiasMeter) */}
+          {/* 👇 PUBLISHER ROW */}
           <div className="mt-3 flex items-center justify-between text-xs">
             <div className="opacity-80">
-              by <span className="font-semibold">{article.authorName || "Unknown"}</span>
-              {followersCount > 0 && (
+              by{" "}
+              <span className="font-semibold">
+                {article.authorName || "Unknown"}
+              </span>
+
+              {article.authorFollowersCount > 0 && (
                 <span className="ml-1 opacity-60">
-                  · {followersCount} followers
+                  · {article.authorFollowersCount} followers
                 </span>
               )}
             </div>
 
-            <button
-              onClick={toggleFollow}
-              className="px-3 py-1 rounded-full border hover:opacity-90 transition"
-            >
-              {isFollowing ? "Follwing" : "Follow"}
-            </button>
+            <FollowButton
+              authorUid={article.authorUid}
+              initialIsFollowing={article.isFollowingAuthor}
+              initialFollowersCount={article.authorFollowersCount}
+            />
           </div>
 
-          {/* ACTION BAR (unchanged) */}
+          {/* ACTION BAR */}
           <div className="mt-4 flex items-center justify-between text-sm">
             <div className="flex gap-4 items-center">
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
                 👍 {article.likesCount ?? 0}
               </button>
 
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
                 👎 {article.dislikesCount ?? 0}
               </button>
 
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
                 💬 {article.commentsCount ?? 0}
               </button>
 
@@ -161,6 +135,239 @@ export default function ArticleCard({ article }) {
     </Link>
   );
 }
+
+
+
+
+
+
+
+
+
+// // ARTICLECARD.JSX
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// // import { getAuth } from "firebase/auth";
+// // import { toast } from "react-toastify";
+// import FollowButton from "./FollowButton";
+
+
+// export default function ArticleCard({ article }) {
+//   const [isSaved, setIsSaved] = useState(false);
+//   // const [isFollowing, setIsFollowing] = useState(article.isFollowingAuthor);
+//   // const [isFollowing, setIsFollowing] = useState(false);
+//   // const [followLoading, setFollowLoading] = useState(false);
+
+//   // const [followersCount, setFollowersCount] = useState(
+//   //   article.authorFollowersCount || 0
+//   // );
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//     setIsFollowing(article.isFollowingAuthor);
+//     setFollowersCount(article.authorFollowersCount || 0);
+//   }, [article]);
+
+
+
+//   // async function toggleFollow(e) {
+//   //   e.preventDefault();
+//   //   e.stopPropagation();
+
+//   //   const auth = getAuth();
+//   //   const user = auth.currentUser;
+
+//   //   console.log("[FOLLOW CLICK]");
+//   //   console.log("article.authorUid:", article.authorUid);
+//   //   console.log("current user uid:", user?.uid);
+
+//   //   if (!user) {
+//   //     toast.info("Login to follow creators");
+//   //     return;
+//   //   }
+
+//   //   if (user.uid === article.authorUid) {
+//   //     toast.warn("You can’t follow yourself");
+//   //     return;
+//   //   }
+
+//   //   try {
+//   //     setFollowLoading(true);
+
+//   //     const token = await user.getIdToken();
+//   //     const res = await fetch(
+//   //       `/api/creators/${article.authorUid}/follow`,
+//   //       {
+//   //         method: "POST",
+//   //         headers: {
+//   //           Authorization: `Bearer ${token}`,
+//   //         },
+//   //       }
+//   //     );
+
+//   //     const data = await res.json();
+
+//   //     if (!res.ok || !data.ok) {
+//   //       throw new Error(data.error || "Failed to follow");
+//   //     }
+
+//   //     setIsFollowing(data.following); // 🔥 THIS was missing
+//   //     toast.success(
+//   //       data.following ? "Following creator" : "Unfollowed creator"
+//   //     );
+//   //   } catch (err) {
+//   //     console.error("Follow error:", err);
+//   //     toast.error("Something went wrong");
+//   //   } finally {
+//   //     setFollowLoading(false);
+//   //   }
+//   // }
+
+
+//   // async function toggleFollow(e) {
+//   //   e.preventDefault();
+//   //   e.stopPropagation();
+//   //   console.log("[FOLLOW CLICK]");
+//   //   console.log("article.authorUid:", article.authorUid);
+//   //   console.log("current user uid:", getAuth().currentUser?.uid);
+
+
+//   //   try {
+//   //     const auth = getAuth();
+//   //     const user = auth.currentUser;
+//   //     if (!user) {
+//   //       toast.info("Login to follow creators");
+//   //       return;
+//   //     }
+
+//   //     const token = await user.getIdToken();
+//   //     const res = await fetch(
+//   //       `/api/creators/${article.authorUid}/follow`,
+//   //       {
+//   //         method: "POST",
+//   //         headers: { Authorization: `Bearer ${token}` },
+//   //       }
+//   //     );
+
+//   //     const data = await res.json();
+//   //     if (!res.ok) {
+//   //       if (data.code === "SELF_FOLLOW") {
+//   //         toast.info("You can’t follow yourself 🙂");
+//   //         return;
+//   //       }
+         
+//   //       throw new Error(data.error || "Failed to update subscription");
+//   //     }
+
+
+//   //     setIsFollowing(data.following);
+//   //     setFollowersCount(data.followersCount);
+//   //   } catch {
+//   //     toast.error("Failed to update subscription");
+//   //   }
+//   // }
+
+//   async function toggleSave(e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//       toast.success(data.saved ? "Saved" : "Removed");
+//     } catch {
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <Link href={`/news/${article.id}`} className="block">
+//       <article className="card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+
+//         {/* IMAGE */}
+//         <div className="relative h-44 md:h-56">
+//           {article.mediaUrl ? (
+//             <img src={article.mediaUrl} alt={article.title} className="w-full h-full object-cover" />
+//           ) : (
+//             <div className="w-full h-full bg-gray-800" />
+//           )}
+//         </div>
+
+//         {/* CONTENT */}
+//         <div className="p-4">
+//           <h3 className="text-lg font-semibold line-clamp-2">
+//             {article.title}
+//           </h3>
+
+//           <p className="mt-2 text-sm text-gray-400 line-clamp-3">
+//             {article.content}
+//           </p>
+
+//           {/* 👇 PUBLISHER ROW (replaces BiasMeter) */}
+//           <div className="mt-3 flex items-center justify-between text-xs">
+//             <div className="opacity-80">
+//               by <span className="font-semibold">{article.authorName || "Unknown"}</span>
+//               {followersCount > 0 && (
+//                 <span className="ml-1 opacity-60">
+//                   · {followersCount} followers
+//                 </span>
+//               )}
+//             </div>
+
+//             <button
+//               onClick={toggleFollow}
+//               className="px-3 py-1 rounded-full border hover:opacity-90 transition"
+//             >
+//               {isFollowing ? "Follwing" : "Follow"}
+//             </button>
+//           </div>
+
+//           {/* ACTION BAR (unchanged) */}
+//           <div className="mt-4 flex items-center justify-between text-sm">
+//             <div className="flex gap-4 items-center">
+//               <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+//                 👍 {article.likesCount ?? 0}
+//               </button>
+
+//               <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+//                 👎 {article.dislikesCount ?? 0}
+//               </button>
+
+//               <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+//                 💬 {article.commentsCount ?? 0}
+//               </button>
+
+//               <button onClick={toggleSave}>
+//                 {isSaved ? "🔖" : "📑"}
+//               </button>
+//             </div>
+
+//             <span className="text-xs opacity-70">
+//               {article.createdAt
+//                 ? new Date(article.createdAt).toLocaleDateString()
+//                 : ""}
+//             </span>
+//           </div>
+//         </div>
+//       </article>
+//     </Link>
+//   );
+// }
 
 
 

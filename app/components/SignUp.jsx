@@ -1,3 +1,4 @@
+//app/components/signup.jsx
 'use client'; // This component must be client-side to use hooks
 
 import { useRouter } from 'next/navigation';

@@ -9,9 +9,23 @@ import ThemeToggle from "./ThemeToggle";
 import PostNewsButton from "./PostNewsButton";
 import MyNewsButton from "./MyNewsButton";
 import ProfileButton from "./ProfileButton";
+import { getAuth , onAuthStateChanged } from "firebase/auth";
+import "@/backend/firebase/config"
+import Signup from "./SignUp"
+import { useEffect } from "react";
 
 export default function Header({ onSearch }) {
   const [query, setQuery] = useState("");
+  const [user, setUser] = useState(null); // ✅ auth state
+
+  // 🔐 Listen to auth state
+  useEffect(() => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u); // u = Firebase user or null
+    });
+    return () => unsub();
+  }, []);
 
   function runSearch() {
     console.log("[HEADER] runSearch with:", query);
@@ -91,17 +105,24 @@ export default function Header({ onSearch }) {
           </button>
         </div>
 
+ 
+
         {/* RIGHT */}
         <div className="flex items-center gap-3">
-          <button
-            className="hidden md:block px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap hover:opacity-95 transition"
-            style={{
-              background: "var(--button-bg)",
-              color: "var(--button-text)",
-            }}
-          >
-            Get Started
-          </button>
+          {/* 🔥 CONDITIONAL BUTTON */}
+          {!user ? (
+            <Signup /> // 👈 NOT logged in → Sign Up
+          ) : (
+            <button
+              className="hidden md:block px-3 py-2 rounded-md text-sm font-medium"
+              style={{
+                background: "var(--button-bg)",
+                color: "var(--button-text)",
+              }}
+            >
+              Get Started
+            </button>
+          )}
 
           <PostNewsButton />
           <MyNewsButton />
