@@ -3,12 +3,13 @@ import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import News from "@/backend/models/News";
 import User from "@/backend/models/User";
+
 export async function GET(req: Request) {
   try {
     await connectToDatabase();
 
     // Try to get logged-in user (optional)
-    let currentUser:any = null;
+    let currentUser: any = null;
     try {
       const { decoded } = await requireAuth(req);
       currentUser = await User.findOne({ uid: decoded.uid }).lean();
@@ -22,14 +23,12 @@ export async function GET(req: Request) {
       .lean();
 
     // Fetch all authors in one go (important for performance)
-    const authorUids = [...new Set(posts.map(p => p.authorUid))];
+    const authorUids = [...new Set(posts.map((p: any) => p.authorUid))];
     const authors = await User.find({ uid: { $in: authorUids } })
       .select("uid followers")
       .lean();
 
-    const authorMap = new Map(
-      authors.map(a => [a.uid, a])
-    );
+    const authorMap = new Map(authors.map((a: any) => [a.uid, a]));
 
     const serialised = posts.map((p: any) => {
       const author = authorMap.get(p.authorUid);
@@ -38,6 +37,10 @@ export async function GET(req: Request) {
         id: p._id.toString(),
         title: p.title,
         content: p.content,
+
+        // ✅ SOURCE LINK (NEW)
+        sourceUrl: p.sourceUrl || "",
+
         mediaUrl: p.mediaUrl || "",
         mediaType: p.mediaType || "none",
         category: p.category || "general",
@@ -73,6 +76,90 @@ export async function GET(req: Request) {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+// // app/api/news/route.ts
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import User from "@/backend/models/User";
+// export async function GET(req: Request) {
+//   try {
+//     await connectToDatabase();
+
+//     // Try to get logged-in user (optional)
+//     let currentUser:any = null;
+//     try {
+//       const { decoded } = await requireAuth(req);
+//       currentUser = await User.findOne({ uid: decoded.uid }).lean();
+//     } catch {
+//       // user not logged in → allowed
+//     }
+
+//     const posts = await News.find({ status: "published" })
+//       .sort({ createdAt: -1 })
+//       .limit(20)
+//       .lean();
+
+//     // Fetch all authors in one go (important for performance)
+//     const authorUids = [...new Set(posts.map(p => p.authorUid))];
+//     const authors = await User.find({ uid: { $in: authorUids } })
+//       .select("uid followers")
+//       .lean();
+
+//     const authorMap = new Map(
+//       authors.map(a => [a.uid, a])
+//     );
+
+//     const serialised = posts.map((p: any) => {
+//       const author = authorMap.get(p.authorUid);
+
+//       return {
+//         id: p._id.toString(),
+//         title: p.title,
+//         content: p.content,
+//         mediaUrl: p.mediaUrl || "",
+//         mediaType: p.mediaType || "none",
+//         category: p.category || "general",
+//         tags: Array.isArray(p.tags) ? p.tags : [],
+
+//         // 👇 AUTHOR INFO
+//         authorUid: p.authorUid,
+//         authorName: p.authorName || "",
+//         authorEmail: p.authorEmail || "",
+
+//         // 👇 FOLLOW DATA
+//         isFollowingAuthor: currentUser
+//           ? currentUser.followingCreators?.includes(p.authorUid)
+//           : false,
+//         authorFollowersCount: author?.followers?.length || 0,
+
+//         createdAt: p.createdAt?.toISOString() || "",
+//         likesCount: p.likesCount || 0,
+//         dislikesCount: p.dislikesCount || 0,
+//         commentsCount: p.commentsCount || 0,
+//       };
+//     });
+
+//     return new Response(
+//       JSON.stringify({ ok: true, posts: serialised }),
+//       { status: 200 }
+//     );
+//   } catch (err) {
+//     console.error("GET /api/news error:", err);
+//     return new Response(
+//       JSON.stringify({ ok: false, error: "Failed to load posts" }),
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

@@ -79,6 +79,7 @@ export default function PostNewsPage() {
   // NEW:
 
   const [affectedState, setAffectedState] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
 
   const router = useRouter();
 
@@ -115,6 +116,7 @@ export default function PostNewsPage() {
 
   const isTitleValid =
     titleWords >= MIN_TITLE_WORDS && titleWords <= MAX_TITLE_WORDS;
+  const isSourceValid = /^https?:\/\/.+\..+/.test(sourceUrl.trim());
 
   const isContentValid =
     contentWords >= MIN_CONTENT_WORDS && contentWords <= MAX_CONTENT_WORDS;
@@ -122,7 +124,7 @@ export default function PostNewsPage() {
   const hasMedia = !!mediaUrl;
 
   const canSubmit =
-    isTitleValid && isContentValid && hasMedia && !loading && !uploading;
+    isTitleValid && isContentValid && hasMedia && !loading && !uploading && isSourceValid;
 
   // ---- NEW: tag toggle handler ----
   const toggleTag = (tag) => {
@@ -213,6 +215,7 @@ export default function PostNewsPage() {
         body: JSON.stringify({
           title,
           content,
+          sourceUrl,
           mediaUrl: mediaUrl || null,
           // ---- NEW: send category + tags ----
           category,
@@ -281,6 +284,33 @@ export default function PostNewsPage() {
               Content words: {contentWords} (required: {MIN_CONTENT_WORDS}–{MAX_CONTENT_WORDS})
             </p>
           </div>
+          {/* Source link */}
+          <div className="flex flex-col gap-1">
+            <label className="card-body text-sm font-medium">
+              News Source (required)
+            </label>
+
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="https://example.com/original-news"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+
+            <p
+              className={`text-xs card-body ${
+                !sourceUrl
+                  ? ""
+                  : isSourceValid
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              Please provide a valid source URL
+            </p>
+          </div>
+
 
           {/* ---- NEW: Category select ---- */}
           <div className="flex flex-col gap-1">

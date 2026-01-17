@@ -15,6 +15,13 @@ const NewsSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // News source (credibility)
+    sourceUrl: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
 
     // Cloudinary media info
     mediaUrl: {

@@ -1,3 +1,4 @@
+//app/news/[id]/page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -299,6 +300,27 @@ export default function NewsDetailPage() {
                 <p key={idx}>{para}</p>
               ))}
             </div>
+
+
+            {/* Divider */}
+            <div className="my-6 h-px w-full bg-[var(--card-border)]" />
+
+            
+            {/* Source link */}
+            {post.sourceUrl && (
+              <div className="flex items-center gap-2 text-xs md:text-sm card-body">
+                <span className="opacity-70">Source:</span>
+                <a
+                  href={post.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-orange-400 underline break-all hover:opacity-90"
+                >
+                  {post.sourceUrl}
+                </a>
+              </div>
+            )}
+
 
             {/* Divider */}
             <div className="my-6 h-px w-full bg-[var(--card-border)]" />
