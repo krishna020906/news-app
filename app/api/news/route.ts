@@ -1,28 +1,27 @@
+// // app/api/news/route.ts
 // app/api/news/route.ts
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import News from "@/backend/models/News";
 import User from "@/backend/models/User";
 
+/* ===================== GET ===================== */
 export async function GET(req: Request) {
   try {
     await connectToDatabase();
 
-    // Try to get logged-in user (optional)
     let currentUser: any = null;
     try {
       const { decoded } = await requireAuth(req);
       currentUser = await User.findOne({ uid: decoded.uid }).lean();
-    } catch {
-      // user not logged in → allowed
-    }
+    } catch {}
 
     const posts = await News.find({ status: "published" })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
 
-    // Fetch all authors in one go (important for performance)
     const authorUids = [...new Set(posts.map((p: any) => p.authorUid))];
     const authors = await User.find({ uid: { $in: authorUids } })
       .select("uid followers")
@@ -37,21 +36,16 @@ export async function GET(req: Request) {
         id: p._id.toString(),
         title: p.title,
         content: p.content,
-
-        // ✅ SOURCE LINK (NEW)
         sourceUrl: p.sourceUrl || "",
-
         mediaUrl: p.mediaUrl || "",
         mediaType: p.mediaType || "none",
         category: p.category || "general",
         tags: Array.isArray(p.tags) ? p.tags : [],
 
-        // 👇 AUTHOR INFO
         authorUid: p.authorUid,
         authorName: p.authorName || "",
         authorEmail: p.authorEmail || "",
 
-        // 👇 FOLLOW DATA
         isFollowingAuthor: currentUser
           ? currentUser.followingCreators?.includes(p.authorUid)
           : false,
@@ -64,18 +58,155 @@ export async function GET(req: Request) {
       };
     });
 
-    return new Response(
-      JSON.stringify({ ok: true, posts: serialised }),
-      { status: 200 }
-    );
+    return NextResponse.json({ ok: true, posts: serialised });
   } catch (err) {
     console.error("GET /api/news error:", err);
-    return new Response(
-      JSON.stringify({ ok: false, error: "Failed to load posts" }),
+    return NextResponse.json(
+      { ok: false, error: "Failed to load posts" },
       { status: 500 }
     );
   }
 }
+
+/* ===================== POST ===================== */
+export async function POST(req: Request) {
+  try {
+    const { decoded, user } = await requireAuth(req);
+    await connectToDatabase();
+
+    const body = await req.json();
+    const {
+      title,
+      content,
+      sourceUrl,
+      mediaUrl,
+      category,
+      tags,
+      affectedState,
+    } = body;
+
+    // 🔒 Backend validation (important)
+    if (!title || !content || !mediaUrl || !sourceUrl) {
+      return NextResponse.json(
+        { ok: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const post = await News.create({
+      title,
+      content,
+      sourceUrl,
+      mediaUrl,
+      mediaType: mediaUrl.includes("video") ? "video" : "image",
+      category,
+      tags,
+      affectedState,
+      authorUid: decoded.uid,
+      authorEmail: decoded.email,
+      authorName: user?.name || "",
+      status: "published",
+    });
+
+    return NextResponse.json({
+      ok: true,
+      postId: post._id.toString(),
+    });
+  } catch (err) {
+    console.error("POST /api/news error:", err);
+    return NextResponse.json(
+      { ok: false, error: "Failed to create post" },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import User from "@/backend/models/User";
+
+// export async function GET(req: Request) {
+//   try {
+//     await connectToDatabase();
+
+//     // Try to get logged-in user (optional)
+//     let currentUser: any = null;
+//     try {
+//       const { decoded } = await requireAuth(req);
+//       currentUser = await User.findOne({ uid: decoded.uid }).lean();
+//     } catch {
+//       // user not logged in → allowed
+//     }
+
+//     const posts = await News.find({ status: "published" })
+//       .sort({ createdAt: -1 })
+//       .limit(20)
+//       .lean();
+
+//     // Fetch all authors in one go (important for performance)
+//     const authorUids = [...new Set(posts.map((p: any) => p.authorUid))];
+//     const authors = await User.find({ uid: { $in: authorUids } })
+//       .select("uid followers")
+//       .lean();
+
+//     const authorMap = new Map(authors.map((a: any) => [a.uid, a]));
+
+//     const serialised = posts.map((p: any) => {
+//       const author = authorMap.get(p.authorUid);
+
+//       return {
+//         id: p._id.toString(),
+//         title: p.title,
+//         content: p.content,
+
+//         // ✅ SOURCE LINK (NEW)
+//         sourceUrl: p.sourceUrl || "",
+
+//         mediaUrl: p.mediaUrl || "",
+//         mediaType: p.mediaType || "none",
+//         category: p.category || "general",
+//         tags: Array.isArray(p.tags) ? p.tags : [],
+
+//         // 👇 AUTHOR INFO
+//         authorUid: p.authorUid,
+//         authorName: p.authorName || "",
+//         authorEmail: p.authorEmail || "",
+
+//         // 👇 FOLLOW DATA
+//         isFollowingAuthor: currentUser
+//           ? currentUser.followingCreators?.includes(p.authorUid)
+//           : false,
+//         authorFollowersCount: author?.followers?.length || 0,
+
+//         createdAt: p.createdAt?.toISOString() || "",
+//         likesCount: p.likesCount || 0,
+//         dislikesCount: p.dislikesCount || 0,
+//         commentsCount: p.commentsCount || 0,
+//       };
+//     });
+
+//     return new Response(
+//       JSON.stringify({ ok: true, posts: serialised }),
+//       { status: 200 }
+//     );
+//   } catch (err) {
+//     console.error("GET /api/news error:", err);
+//     return new Response(
+//       JSON.stringify({ ok: false, error: "Failed to load posts" }),
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

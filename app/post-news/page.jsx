@@ -224,7 +224,11 @@ export default function PostNewsPage() {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {}
+
       if (!res.ok) throw new Error(data.error || "Failed to post news");
 
       router.push("/");
