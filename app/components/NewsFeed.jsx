@@ -1,4 +1,129 @@
-//NEWSFEED.JSX
+// // //NEWSFEED.JSX
+// // components/NewsFeed.jsx
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import ArticleCard from "./ArticleCard";
+// import { getAuth } from "firebase/auth";
+
+// export default function NewsFeed({ mode, query, category, onOpen }) {
+//   const [articles, setArticles] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+
+//   useEffect(() => {
+//     let cancelled = false;
+
+//     async function load() {
+//       try {
+//         setLoading(true);
+//         setError("");
+
+//         let url = "/api/news";
+//         let headers = {};
+
+//         // 🔀 MODE ROUTING
+//         if (mode === "top") {
+//           url = "/api/news/top";
+//         }
+
+//         if (mode === "following") {
+//           const auth = getAuth();
+//           const user = auth.currentUser;
+
+//           if (!user) {
+//             setArticles([]);
+//             setLoading(false);
+//             return;
+//           }
+
+//           const token = await user.getIdToken();
+//           headers.Authorization = `Bearer ${token}`;
+//           url = "/api/news/following";
+//         }
+
+//         if (query) {
+//           url = `/api/search?q=${encodeURIComponent(query)}`;
+//         }
+
+//         if (category) {
+//           url += `${url.includes("?") ? "&" : "?"}category=${category}`;
+//         }
+
+//         const res = await fetch(url, { headers });
+//         const data = await res.json();
+
+//         if (!res.ok) throw new Error(data.error || "Failed to load feed");
+
+//         const results =
+//           data.posts || data.results || [];
+
+//         if (!cancelled) setArticles(results);
+//       } catch (err) {
+//         if (!cancelled) setError(err.message);
+//       } finally {
+//         if (!cancelled) setLoading(false);
+//       }
+//     }
+
+//     load();
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, [mode, query, category]);
+
+//   if (loading) {
+//     return (
+//       <div className="card p-6 text-center card-body">
+//         Loading…
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="card p-6 text-center text-red-400">
+//         {error}
+//       </div>
+//     );
+//   }
+
+//   if (articles.length === 0) {
+//     return (
+//       <div className="card p-8 text-center">
+//         <h3 className="card-title mb-2">
+//           Nothing to show
+//         </h3>
+//         <p className="card-body opacity-70">
+//           {mode === "following"
+//             ? "Follow creators to see their news here."
+//             : "No articles found."}
+//         </p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="grid gap-6">
+//       {articles.map((article) => (
+//         <ArticleCard
+//           key={article.id}
+//           article={article}
+//           onOpen={onOpen}
+//         />
+//       ))}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useEffect, useState } from "react";

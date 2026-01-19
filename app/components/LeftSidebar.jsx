@@ -18,6 +18,12 @@ const NAV_ITEMS = [
     icon: "✨",
   },
   {
+    key: "following", // ✅ NEW
+    label: "Following",
+    href: "/following",
+    icon: "👥",
+  },
+  {
     key: "my-news",
     label: "My News",
     href: "/my-news",
@@ -89,7 +95,7 @@ export default function LeftSidebar() {
                 // only active when tab=top
                 isActive = pathname === "/" && tab === "top";
               } else {
-                isActive = pathname.startsWith(item.href);
+                isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               }
 
               return (

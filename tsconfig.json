@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/components/MainPage.jsx", "app/components/SearchBar.jsx", "app/components/FilterChips.jsx", "app/components/ArticleCard.jsx", "app/components/BiasMeter.jsx", "app/components/Recommendation.jsx", "app/components/MobileNav.jsx", "app/components/ArticleModal.jsx", "app/components/Header.jsx", "app/components/PostNewsClientGuard.tsx", "app/post-news/page.jsx", "backend/utils/uploadToCloudinary.js"  ],
+, "app/components/MainPage.jsx", "app/components/SearchBar.jsx", "app/components/FilterChips.jsx", "app/components/ArticleCard.jsx", "app/components/BiasMeter.jsx", "app/components/Recommendation.jsx", "app/components/MobileNav.jsx", "app/components/ArticleModal.jsx", "app/components/Header.jsx", "app/components/PostNewsClientGuard.tsx", "app/post-news/page.jsx", "backend/utils/uploadToCloudinary.js", "app/api/news/following/route.js"  ],
   "exclude": ["node_modules"]
 }
