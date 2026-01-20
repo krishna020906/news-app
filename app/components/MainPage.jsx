@@ -35,8 +35,12 @@ export default function MainPage() {
   const [query, setQuery] = useState("");
 
 
-  const tab = searchParams.get("tab"); // "top" or null
-  const mode = tab === "top" ? "top" : "for-you"; // 👈 default personalised
+  const tab = searchParams.get("tab");
+
+  let mode = "for-you";
+  if (tab === "top") mode = "top";
+  if (tab === "following") mode = "following";
+
   const [user, setUser] = useState(null);
   useEffect(() => {
     console.log("[MAINPAGE] query updated:", query);

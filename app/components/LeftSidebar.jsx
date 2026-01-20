@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   {
     key: "following", // ✅ NEW
     label: "Following",
-    href: "/following",
+    href: "/?tab=following",
     icon: "👥",
   },
   {
@@ -89,13 +89,17 @@ export default function LeftSidebar() {
               let isActive = false;
 
               if (item.key === "for-you") {
-                // default: personalised when at "/" and NOT explicitly tab=top
-                isActive = pathname === "/" && tab !== "top";
+                
+                isActive = pathname === "/" && !tab;
               } else if (item.key === "home") {
-                // only active when tab=top
-                isActive = pathname === "/" && tab === "top";
-              } else {
-                isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                
+                  isActive = pathname === "/" && tab === "top";
+              } else if (item.key === "following") {
+                
+                  isActive = pathname === "/" && tab === "following";
+              }
+                else {
+                  isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               }
 
               return (
