@@ -3,32 +3,52 @@ import mongoose from "mongoose";
 
 const NewsSchema = new mongoose.Schema(
   {
-    // Short headline (we enforce word limit on frontend)
     title: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // Full article body (word limit handled on frontend)
-    content: {
+    // 🧩 Structured analysis fields
+    whatHappened: {
       type: String,
       required: true,
+      trim: true,
     },
-    // News source (credibility)
+    whyItMatters: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    analysis: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    perspective: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    whoBenefits: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // 🔗 Source
     sourceUrl: {
       type: String,
       required: true,
       trim: true,
     },
 
-
-    // Cloudinary media info
+    // 🖼 Media
     mediaUrl: {
-      type: String, // secure_url from Cloudinary
+      type: String,
     },
     mediaPublicId: {
-      type: String, // public_id from Cloudinary (if you capture it later)
+      type: String,
     },
     mediaType: {
       type: String,
@@ -36,57 +56,37 @@ const NewsSchema = new mongoose.Schema(
       default: "none",
     },
 
-    // News classification
+    // 🏷 Classification
     category: {
       type: String,
       default: "general",
       index: true,
     },
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    tags: [{ type: String, trim: true }],
 
-    // Author info (from Firebase auth)
+    // 👤 Author
     authorUid: {
       type: String,
       required: true,
       index: true,
     },
-    authorEmail: {
-      type: String,
-    },
-    authorName: {
-      type: String,
-    },
+    authorEmail: String,
+    authorName: String,
 
-    // Publishing state
+    // 📌 Status
     status: {
       type: String,
       enum: ["draft", "published"],
       default: "published",
       index: true,
     },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
 
-    // Basic engagement stats
-    likesCount: {
-      type: Number,
-      default: 0,
-    },
-    dislikesCount: {
-      type: Number,
-      default: 0,
-    },
-    commentsCount: {
-      type: Number,
-      default: 0,
-    },
+    // 📊 Engagement
+    likesCount: { type: Number, default: 0 },
+    dislikesCount: { type: Number, default: 0 },
+    commentsCount: { type: Number, default: 0 },
+
+    // 📍 Local relevance
     affectedState: {
       type: String,
       trim: true,
@@ -94,14 +94,121 @@ const NewsSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // createdAt & updatedAt
+    timestamps: true,
   }
 );
 
-// For feeds sorted by newest first
 NewsSchema.index({ createdAt: -1 });
 
-export default mongoose.models.News || mongoose.model("News", NewsSchema);
+export default mongoose.models.News ||
+  mongoose.model("News", NewsSchema);
+
+
+
+
+// import mongoose from "mongoose";
+
+// const NewsSchema = new mongoose.Schema(
+//   {
+//     // Short headline (we enforce word limit on frontend)
+//     title: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+
+//     // Full article body (word limit handled on frontend)
+//     content: {
+//       type: String,
+//       required: true,
+//     },
+//     // News source (credibility)
+//     sourceUrl: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+
+
+//     // Cloudinary media info
+//     mediaUrl: {
+//       type: String, // secure_url from Cloudinary
+//     },
+//     mediaPublicId: {
+//       type: String, // public_id from Cloudinary (if you capture it later)
+//     },
+//     mediaType: {
+//       type: String,
+//       enum: ["image", "video", "none"],
+//       default: "none",
+//     },
+
+//     // News classification
+//     category: {
+//       type: String,
+//       default: "general",
+//       index: true,
+//     },
+//     tags: [
+//       {
+//         type: String,
+//         trim: true,
+//       },
+//     ],
+
+//     // Author info (from Firebase auth)
+//     authorUid: {
+//       type: String,
+//       required: true,
+//       index: true,
+//     },
+//     authorEmail: {
+//       type: String,
+//     },
+//     authorName: {
+//       type: String,
+//     },
+
+//     // Publishing state
+//     status: {
+//       type: String,
+//       enum: ["draft", "published"],
+//       default: "published",
+//       index: true,
+//     },
+//     isFeatured: {
+//       type: Boolean,
+//       default: false,
+//     },
+
+//     // Basic engagement stats
+//     likesCount: {
+//       type: Number,
+//       default: 0,
+//     },
+//     dislikesCount: {
+//       type: Number,
+//       default: 0,
+//     },
+//     commentsCount: {
+//       type: Number,
+//       default: 0,
+//     },
+//     affectedState: {
+//       type: String,
+//       trim: true,
+//       index: true,
+//     },
+//   },
+//   {
+//     timestamps: true, // createdAt & updatedAt
+//   }
+// );
+
+// // For feeds sorted by newest first
+// NewsSchema.index({ createdAt: -1 });
+
+// export default mongoose.models.News || mongoose.model("News", NewsSchema);
 
 
 

@@ -105,6 +105,25 @@ export default function PostNewsPage() {
   const MIN_CONTENT_WORDS = 30;
   const MAX_CONTENT_WORDS = 600;
 
+  const [whatHappened, setWhatHappened] = useState("");
+  const [whyItMatters, setWhyItMatters] = useState("");
+  const [analysis, setAnalysis] = useState("");
+  const [perspective, setPerspective] = useState("");
+  const [whoBenefits, setWhoBenefits] = useState("");
+
+
+  const MIN_SECTION_WORDS = 20;
+  const MAX_SECTION_WORDS = 200;
+
+  const isValidSection = (text) => {
+    const words = countWords(text);
+    return words >= MIN_SECTION_WORDS && words <= MAX_SECTION_WORDS;
+  };
+
+
+
+
+
   const countWords = (str) =>
     str
       .trim()
@@ -123,10 +142,21 @@ export default function PostNewsPage() {
 
   const hasMedia = !!mediaUrl;
 
-  const canSubmit =
-    isTitleValid && isContentValid && hasMedia && !loading && !uploading && isSourceValid;
+  // const canSubmit =
+  //   isTitleValid && isContentValid && hasMedia && !loading && !uploading && isSourceValid;
 
   // ---- NEW: tag toggle handler ----
+  const canSubmit =
+    isTitleValid &&
+    isValidSection(whatHappened) &&
+    isValidSection(whyItMatters) &&
+    isValidSection(analysis) &&
+    isValidSection(perspective) &&
+    isValidSection(whoBenefits) &&
+    hasMedia &&
+    !loading &&
+    !uploading &&
+    isSourceValid;
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
       prev.includes(tag)
@@ -268,15 +298,118 @@ export default function PostNewsPage() {
           </div>
 
           {/* Content */}
-          <div className="flex flex-col gap-1">
+          {/* 📰 What happened */}
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm text-[var(--text-title)]">
+              📰 What happened
+            </h3>
+            <p className="text-xs opacity-70">
+              Explain the news clearly and factually. No opinions. Just what occurred.
+            </p>
+
+            <textarea
+              value={whatHappened}
+              onChange={(e) => setWhatHappened(e.target.value)}
+              rows={4}
+              placeholder="Write the factual summary here…"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+
+          {/* 🎯 Why this matters */}
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm text-[var(--text-title)]">
+              🎯 Why this matters
+            </h3>
+            <p className="text-xs opacity-70">
+              Why should people care? Who is affected and what are the implications?
+            </p>
+
+            <textarea
+              value={whyItMatters}
+              onChange={(e) => setWhyItMatters(e.target.value)}
+              rows={4}
+              placeholder="Explain the importance and impact…"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+
+          {/* 🧠 Your analysis */}
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm text-[var(--text-title)]">
+              🧠 Your analysis
+            </h3>
+            <p className="text-xs opacity-70">
+              Explain what this means, possible outcomes, risks, or trends.
+            </p>
+
+            <textarea
+              value={analysis}
+              onChange={(e) => setAnalysis(e.target.value)}
+              rows={4}
+              placeholder="Break down the implications or future outcomes…"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+
+          {/* 💬 Your perspective */}
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm text-[var(--text-title)]">
+              💬 Your perspective
+            </h3>
+            <p className="text-xs opacity-70">
+              Share your personal take and why you think that way.
+            </p>
+
+            <textarea
+              value={perspective}
+              onChange={(e) => setPerspective(e.target.value)}
+              rows={4}
+              placeholder="Your opinion, explained clearly…"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+
+          {/* ⚖️ Who benefits / who loses */}
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm text-[var(--text-title)]">
+              ⚖️ How It Affects People
+            </h3>
+            <p className="text-xs opacity-70">
+              Whom & How It Affects People
+            </p>
+
+            <textarea
+              value={whoBenefits}
+              onChange={(e) => setWhoBenefits(e.target.value)}
+              rows={4}
+              placeholder="Who gains and who is negatively impacted?"
+              className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+
+
+
+
+
+
+
+
+
+          {/* <div className="flex flex-col gap-1">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Content"
               rows={6}
               className="p-3 rounded-lg border border-[var(--card-border)] bg-transparent card-body focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-            <p
+            /> */}
+            {/* <p
               className={`text-xs card-body ${
                 contentWords === 0
                   ? ""
@@ -287,7 +420,7 @@ export default function PostNewsPage() {
             >
               Content words: {contentWords} (required: {MIN_CONTENT_WORDS}–{MAX_CONTENT_WORDS})
             </p>
-          </div>
+          </div> */}
           {/* Source link */}
           <div className="flex flex-col gap-1">
             <label className="card-body text-sm font-medium">
