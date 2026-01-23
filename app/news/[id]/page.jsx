@@ -19,6 +19,22 @@ function formatTimeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
+
+  // const parts = content.split(/##\s*/g);
+
+  // parts.forEach((part) => {
+  //   const [title, ...rest] = part.split("\n");
+  //   const body = rest.join("\n").trim();
+
+  //   if (/WHAT_HAPPENED/i.test(title)) sections.whatHappened = body;
+  //   if (/WHY_IT_MATTERS/i.test(title)) sections.whyItMatters = body;
+  //   if (/ANALYSIS/i.test(title)) sections.analysis = body;
+  //   if (/PERSPECTIVE/i.test(title)) sections.perspective = body;
+  // });
+
+
+
+
 export default function NewsDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -57,6 +73,8 @@ export default function NewsDetailPage() {
         if (!cancelled) setLoadingPost(false);
       }
     }
+  // const sections = parseSections(post.content);
+
 
     async function loadComments() {
       try {
@@ -295,11 +313,77 @@ export default function NewsDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="card-body mt-2 space-y-4 leading-relaxed text-sm md:text-base">
+            {/* 🧩 Structured News Content */}
+            <div className="space-y-6 mt-4">
+
+              {/* What happened */}
+              {post.whatHappened && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    📰 What happened
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {post.whatHappened}
+                  </p>
+                </section>
+              )}
+
+              {/* Why this matters */}
+              {post.whyItMatters && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    📌 Why this matters
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {post.whyItMatters}
+                  </p>
+                </section>
+              )}
+
+              {/* Analysis */}
+              {post.analysis && (
+                <section className="p-5 rounded-2xl border border-orange-500/40 bg-black/20">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-2 text-orange-400">
+                    🧠 Analysis
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {post.analysis}
+                  </p>
+                </section>
+              )}
+
+              {/* Perspective */}
+              {post.perspective && (
+                <section className="p-5 rounded-2xl border border-[var(--card-border)]">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    💬 Creator’s perspective
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed italic opacity-90">
+                    {post.perspective}
+                  </p>
+                </section>
+              )}
+
+              {/* Who benefits / affected */}
+              {post.whoBenefits && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]/60">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    ⚖️ How it affects people
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {post.whoBenefits}
+                  </p>
+                </section>
+              )}
+
+            </div>
+
+
+            {/*<div className="card-body mt-2 space-y-4 leading-relaxed text-sm md:text-base">
               {post.content.split(/\n{2,}/).map((para, idx) => (
                 <p key={idx}>{para}</p>
               ))}
-            </div>
+            </div>*/}
 
 
             {/* Divider */}

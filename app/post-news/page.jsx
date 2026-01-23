@@ -135,7 +135,15 @@ export default function PostNewsPage() {
 
   const isTitleValid =
     titleWords >= MIN_TITLE_WORDS && titleWords <= MAX_TITLE_WORDS;
-  const isSourceValid = /^https?:\/\/.+\..+/.test(sourceUrl.trim());
+  // const isSourceValid = /^https?:\/\/.+\..+/.test(sourceUrl.trim());
+  const isSourceValid = (() => {
+    try {
+      const url = new URL(sourceUrl.trim());
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  })();
 
   const isContentValid =
     contentWords >= MIN_CONTENT_WORDS && contentWords <= MAX_CONTENT_WORDS;
@@ -230,10 +238,20 @@ export default function PostNewsPage() {
       const idToken = await user.getIdToken();
       console.log("SUBMIT payload:", {
         title,
+        sourceUrl,
+        mediaUrl,
         category,
-        selectedTags,
+        tags: selectedTags,
         affectedState,
+        sections: {
+          whatHappened,
+          whyItMatters,
+          analysis,
+          perspective,
+          whoBenefits,
+        },
       });
+
 
 
       const res = await fetch("/api/news", {
@@ -244,14 +262,21 @@ export default function PostNewsPage() {
         },
         body: JSON.stringify({
           title,
-          content,
           sourceUrl,
-          mediaUrl: mediaUrl || null,
-          // ---- NEW: send category + tags ----
+          mediaUrl,
           category,
           tags: selectedTags,
           affectedState,
+
+          sections: {
+            whatHappened,
+            whyItMatters,
+            analysis,
+            perspective,
+            whoBenefits,
+          },
         }),
+
       });
 
       let data = {};

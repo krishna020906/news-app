@@ -3,60 +3,73 @@ import mongoose from "mongoose";
 
 const NewsSchema = new mongoose.Schema(
   {
+    /* =====================
+       📰 HEADLINE
+    ===================== */
     title: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 🧩 Structured analysis fields
-    whatHappened: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    whyItMatters: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    analysis: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    perspective: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    whoBenefits: {
-      type: String,
-      required: true,
-      trim: true,
+    /* =====================
+       🧩 STRUCTURED CONTENT
+       (NEW – single source of truth)
+    ===================== */
+    sections: {
+      whatHappened: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      whyItMatters: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      analysis: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      perspective: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      whoBenefits: {
+        type: String,
+        required: true,
+        trim: true,
+      },
     },
 
-    // 🔗 Source
+    /* =====================
+       🔗 SOURCE
+    ===================== */
     sourceUrl: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 🖼 Media
+    /* =====================
+       🖼 MEDIA
+    ===================== */
     mediaUrl: {
       type: String,
+      required: true,
     },
-    mediaPublicId: {
-      type: String,
-    },
+    mediaPublicId: String,
     mediaType: {
       type: String,
-      enum: ["image", "video", "none"],
-      default: "none",
+      enum: ["image", "video"],
+      required: true,
     },
 
-    // 🏷 Classification
+    /* =====================
+       🏷 CLASSIFICATION
+    ===================== */
     category: {
       type: String,
       default: "general",
@@ -64,7 +77,9 @@ const NewsSchema = new mongoose.Schema(
     },
     tags: [{ type: String, trim: true }],
 
-    // 👤 Author
+    /* =====================
+       👤 AUTHOR
+    ===================== */
     authorUid: {
       type: String,
       required: true,
@@ -73,7 +88,9 @@ const NewsSchema = new mongoose.Schema(
     authorEmail: String,
     authorName: String,
 
-    // 📌 Status
+    /* =====================
+       📌 STATUS
+    ===================== */
     status: {
       type: String,
       enum: ["draft", "published"],
@@ -81,12 +98,16 @@ const NewsSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 📊 Engagement
+    /* =====================
+       📊 ENGAGEMENT
+    ===================== */
     likesCount: { type: Number, default: 0 },
     dislikesCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
 
-    // 📍 Local relevance
+    /* =====================
+       📍 LOCAL RELEVANCE
+    ===================== */
     affectedState: {
       type: String,
       trim: true,
@@ -98,10 +119,127 @@ const NewsSchema = new mongoose.Schema(
   }
 );
 
+// Feed sorting
 NewsSchema.index({ createdAt: -1 });
 
 export default mongoose.models.News ||
   mongoose.model("News", NewsSchema);
+
+
+
+
+
+
+
+
+
+
+
+
+// // backend/models/News.ts
+// import mongoose from "mongoose";
+
+// const NewsSchema = new mongoose.Schema(
+//   {
+//     title: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+
+//     // 🧩 Structured analysis fields
+//     whatHappened: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     whyItMatters: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     analysis: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     perspective: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     whoBenefits: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+
+//     // 🔗 Source
+//     sourceUrl: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+
+//     // 🖼 Media
+//     mediaUrl: {
+//       type: String,
+//     },
+//     mediaPublicId: {
+//       type: String,
+//     },
+//     mediaType: {
+//       type: String,
+//       enum: ["image", "video", "none"],
+//       default: "none",
+//     },
+
+//     // 🏷 Classification
+//     category: {
+//       type: String,
+//       default: "general",
+//       index: true,
+//     },
+//     tags: [{ type: String, trim: true }],
+
+//     // 👤 Author
+//     authorUid: {
+//       type: String,
+//       required: true,
+//       index: true,
+//     },
+//     authorEmail: String,
+//     authorName: String,
+
+//     // 📌 Status
+//     status: {
+//       type: String,
+//       enum: ["draft", "published"],
+//       default: "published",
+//       index: true,
+//     },
+
+//     // 📊 Engagement
+//     likesCount: { type: Number, default: 0 },
+//     dislikesCount: { type: Number, default: 0 },
+//     commentsCount: { type: Number, default: 0 },
+
+//     // 📍 Local relevance
+//     affectedState: {
+//       type: String,
+//       trim: true,
+//       index: true,
+//     },
+//   },
+//   {
+//     timestamps: true,
+//   }
+// );
+
+// NewsSchema.index({ createdAt: -1 });
+
+// export default mongoose.models.News ||
+//   mongoose.model("News", NewsSchema);
 
 
 
