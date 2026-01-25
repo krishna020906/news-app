@@ -218,6 +218,8 @@ export default function NewsDetailPage() {
   }
 
   const createdLabel = formatTimeAgo(post.createdAt);
+  const sections = post?.sections || {};
+
 
   return (
     <div className="min-h-screen bg-[var(--bg, var(--card-bg))] text-[var(--text-title,#e5e7eb)]">
@@ -315,8 +317,67 @@ export default function NewsDetailPage() {
             {/* Content */}
             {/* 🧩 Structured News Content */}
             <div className="space-y-6 mt-4">
+              {sections.whatHappened && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
+                  <h3 className="text-sm font-semibold mb-2">📰 What happened</h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {sections.whatHappened}
+                  </p>
+                </section>
+              )}
 
-              {/* What happened */}
+              {sections.whyItMatters && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
+                  <h3 className="text-sm font-semibold mb-2">📌 Why this matters</h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {sections.whyItMatters}
+                  </p>
+                </section>
+              )}
+
+              {sections.analysis && (
+                <section className="p-5 rounded-2xl border border-orange-500/40 bg-black/20">
+                  <h3 className="text-sm font-semibold mb-2 text-orange-400">
+                    🧠 Analysis
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {sections.analysis}
+                  </p>
+                </section>
+              )}
+
+              {sections.perspective && (
+                <section className="p-5 rounded-2xl border border-[var(--card-border)]">
+                  <h3 className="text-sm font-semibold mb-2">
+                    💬 Creator’s perspective
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed italic opacity-90">
+                    {sections.perspective}
+                  </p>
+                </section>
+              )}
+
+              {sections.whoBenefits && (
+                <section className="p-5 rounded-2xl bg-[var(--badge-bg)]/60">
+                  <h3 className="text-sm font-semibold mb-2">
+                    ⚖️ How it affects people
+                  </h3>
+                  <p className="card-body text-sm leading-relaxed">
+                    {sections.whoBenefits}
+                  </p>
+                </section>
+              )}
+            </div>
+
+
+
+
+
+
+
+            {/*<div className="space-y-6 mt-4">
+
+              
               {post.whatHappened && (
                 <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
                   <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -328,7 +389,7 @@ export default function NewsDetailPage() {
                 </section>
               )}
 
-              {/* Why this matters */}
+              
               {post.whyItMatters && (
                 <section className="p-5 rounded-2xl bg-[var(--badge-bg)]">
                   <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -340,7 +401,7 @@ export default function NewsDetailPage() {
                 </section>
               )}
 
-              {/* Analysis */}
+              
               {post.analysis && (
                 <section className="p-5 rounded-2xl border border-orange-500/40 bg-black/20">
                   <h3 className="flex items-center gap-2 text-sm font-semibold mb-2 text-orange-400">
@@ -352,7 +413,7 @@ export default function NewsDetailPage() {
                 </section>
               )}
 
-              {/* Perspective */}
+            
               {post.perspective && (
                 <section className="p-5 rounded-2xl border border-[var(--card-border)]">
                   <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -364,7 +425,7 @@ export default function NewsDetailPage() {
                 </section>
               )}
 
-              {/* Who benefits / affected */}
+             
               {post.whoBenefits && (
                 <section className="p-5 rounded-2xl bg-[var(--badge-bg)]/60">
                   <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
@@ -376,7 +437,7 @@ export default function NewsDetailPage() {
                 </section>
               )}
 
-            </div>
+            </div>*/}
 
 
             {/*<div className="card-body mt-2 space-y-4 leading-relaxed text-sm md:text-base">
