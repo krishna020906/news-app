@@ -97,6 +97,13 @@ const NewsSchema = new mongoose.Schema(
       default: "published",
       index: true,
     },
+    // backend/models/News.ts
+    relevantProfessions: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
 
     /* =====================
        📊 ENGAGEMENT

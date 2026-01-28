@@ -20,6 +20,18 @@ const CATEGORY_OPTIONS = [
   { value: "finance", label: "Finance" },
   { value: "trading", label: "Trading" },
 ];
+const PROFESSION_OPTIONS = [
+  "Student",
+  "Software Engineer",
+  "Web Developer",
+  "Data Scientist",
+  "Trader",
+  "Investor",
+  "Entrepreneur",
+  "Designer",
+  "Freelancer",
+];
+
 
 const HOBBY_TAGS = [
   "coding",
@@ -149,6 +161,15 @@ export default function PostNewsPage() {
     contentWords >= MIN_CONTENT_WORDS && contentWords <= MAX_CONTENT_WORDS;
 
   const hasMedia = !!mediaUrl;
+  const [relevantProfessions, setRelevantProfessions] = useState([]);
+  const toggleProfession = (p) => {
+    setRelevantProfessions(prev =>
+      prev.includes(p)
+        ? prev.filter(x => x !== p)
+        : [...prev, p]
+    );
+  };
+
 
   // const canSubmit =
   //   isTitleValid && isContentValid && hasMedia && !loading && !uploading && isSourceValid;
@@ -182,6 +203,8 @@ export default function PostNewsPage() {
       setError("File too large. Max 20MB.");
       return;
     }
+
+
 
     setError("");
     setFile(selected);
@@ -267,7 +290,7 @@ export default function PostNewsPage() {
           category,
           tags: selectedTags,
           affectedState,
-
+          relevantProfessions,
           sections: {
             whatHappened,
             whyItMatters,
@@ -495,6 +518,42 @@ export default function PostNewsPage() {
               ))}
             </select>
           </div>
+          {/* --- TO WHOM THE NEWS MATTERS THE MOST*/}
+          <div className="flex flex-col gap-2">
+            <label className="card-body text-sm font-medium">
+              Relevant professions
+            </label>
+            <p className="card-body text-xs opacity-70">
+              Who is this news most relevant for?
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {PROFESSION_OPTIONS.map((p) => {
+                const selected = relevantProfessions.includes(p);
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => toggleProfession(p)}
+                    className={`px-3 py-1 rounded-full text-xs border ${
+                      selected
+                        ? "bg-orange-500 border-orange-500 text-white"
+                        : "border-[var(--card-border)] card-body"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+
+
+
+
+
+
 
           {/* ---- NEW: Tags (hobbies / interests) ---- */}
           <div className="flex flex-col gap-2">

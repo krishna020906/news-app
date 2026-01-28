@@ -1,3 +1,4 @@
+// // app/api/news/for-you/route.ts
 // app/api/news/for-you/route.ts
 import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
@@ -25,12 +26,9 @@ export async function GET(req: Request) {
 
       const serialisedFallback = fallbackPosts.map((p: any) => ({
         id: p._id.toString(),
-
-        // 🔥 FIX
         authorUid: p.authorUid,
 
         title: p.title,
-        content: p.content,
         mediaUrl: p.mediaUrl || "",
         mediaType: p.mediaType || "none",
         category: p.category || "general",
@@ -61,17 +59,15 @@ export async function GET(req: Request) {
       );
     }
 
-    // ---------- BUILD INTERESTS ----------
+    // ---------- USER SIGNALS ----------
     const userState = (userDoc.state || "").toLowerCase();
-    const profession = (userDoc.profession || "").toLowerCase();
+    const userProfession = (userDoc.profession || "").toLowerCase();
+
     const hobbies: string[] = Array.isArray(userDoc.hobbies)
       ? userDoc.hobbies.map((h: string) => h.toLowerCase())
       : [];
 
-    const interests = [
-      ...(profession ? [profession] : []),
-      ...hobbies,
-    ];
+    const interests = [...hobbies];
 
     // ---------- FETCH CANDIDATES ----------
     const candidates = await News.find({ status: "published" })
@@ -85,9 +81,7 @@ export async function GET(req: Request) {
       .select("uid followers")
       .lean();
 
-    const authorMap = new Map(
-      authors.map((a: any) => [a.uid, a])
-    );
+    const authorMap = new Map(authors.map((a: any) => [a.uid, a]));
 
     // ---------- SCORE ----------
     const scored = candidates.map((p: any) => {
@@ -100,15 +94,32 @@ export async function GET(req: Request) {
 
       const affectedState = (p.affectedState || "").toLowerCase();
 
+      // 🧠 NEW: profession relevance (STEP 3 + 4)
+      const relevantProfessions: string[] = Array.isArray(p.relevantProfessions)
+        ? p.relevantProfessions.map((x: string) => x.toLowerCase())
+        : [];
+
+      // 🎯 PROFESSION MATCH (strong signal)
+      if (
+        userProfession &&
+        relevantProfessions.length &&
+        relevantProfessions.includes(userProfession)
+      ) {
+        score += 5;
+      }
+
+      // 🎯 TAG / HOBBY MATCH
       if (interests.length) {
         const matched = tags.filter((t) => interests.includes(t)).length;
         score += matched * 3;
       }
 
+      // 🎯 CATEGORY MATCH
       if (category && interests.includes(category)) {
         score += 2;
       }
 
+      // 🎯 LOCATION MATCH (strongest)
       if (userState && affectedState && userState === affectedState) {
         score += 6;
       }
@@ -118,7 +129,9 @@ export async function GET(req: Request) {
 
     const withScore = scored.filter((p) => p.score > 0);
     const effectiveList =
-      withScore.length > 0 ? withScore : scored.map((p) => ({ ...p, score: 0 }));
+      withScore.length > 0
+        ? withScore
+        : scored.map((p) => ({ ...p, score: 0 }));
 
     effectiveList.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
@@ -130,18 +143,15 @@ export async function GET(req: Request) {
 
     const slice = effectiveList.slice(offset, offset + limit);
 
-    // ---------- SERIALISE (🔥 FIX HERE) ----------
+    // ---------- SERIALISE ----------
     const serialised = slice.map((p: any) => {
       const author = authorMap.get(p.authorUid);
 
       return {
         id: p._id.toString(),
-
-        // 🔥 REQUIRED FOR FOLLOW FEATURE
         authorUid: p.authorUid,
 
         title: p.title,
-        content: p.content,
         mediaUrl: p.mediaUrl || "",
         mediaType: p.mediaType || "none",
         category: p.category || "general",
@@ -181,6 +191,206 @@ export async function GET(req: Request) {
     });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import User from "@/backend/models/User";
+
+// export async function GET(req: Request) {
+//   try {
+//     const { decoded } = await requireAuth(req);
+//     await connectToDatabase();
+
+//     const url = new URL(req.url);
+//     const limit = Number(url.searchParams.get("limit") || 20);
+//     const offset = Number(url.searchParams.get("offset") || 0);
+
+//     // current user
+//     const userDoc: any = await User.findOne({ uid: decoded.uid }).lean();
+
+//     // ---------- FALLBACK (no profile) ----------
+//     if (!userDoc) {
+//       const fallbackPosts = await News.find({ status: "published" })
+//         .sort({ createdAt: -1 })
+//         .limit(limit)
+//         .lean();
+
+//       const serialisedFallback = fallbackPosts.map((p: any) => ({
+//         id: p._id.toString(),
+
+//         // 🔥 FIX
+//         authorUid: p.authorUid,
+
+//         title: p.title,
+//         content: p.content,
+//         mediaUrl: p.mediaUrl || "",
+//         mediaType: p.mediaType || "none",
+//         category: p.category || "general",
+//         tags: Array.isArray(p.tags) ? p.tags : [],
+
+//         authorName: p.authorName || "",
+//         authorEmail: p.authorEmail || "",
+
+//         isFollowingAuthor: false,
+//         authorFollowersCount: 0,
+
+//         createdAt: p.createdAt?.toISOString() || "",
+//         likesCount: p.likesCount || 0,
+//         dislikesCount: p.dislikesCount || 0,
+//         commentsCount: p.commentsCount || 0,
+//         score: 0,
+//       }));
+
+//       return new Response(
+//         JSON.stringify({
+//           ok: true,
+//           posts: serialisedFallback,
+//           total: serialisedFallback.length,
+//           hasMore: false,
+//           fallback: "no_profile",
+//         }),
+//         { status: 200 }
+//       );
+//     }
+
+//     // ---------- BUILD INTERESTS ----------
+//     const userState = (userDoc.state || "").toLowerCase();
+//     const profession = (userDoc.profession || "").toLowerCase();
+//     const hobbies: string[] = Array.isArray(userDoc.hobbies)
+//       ? userDoc.hobbies.map((h: string) => h.toLowerCase())
+//       : [];
+
+//     const interests = [
+//       ...(profession ? [profession] : []),
+//       ...hobbies,
+//     ];
+
+//     // ---------- FETCH CANDIDATES ----------
+//     const candidates = await News.find({ status: "published" })
+//       .sort({ createdAt: -1 })
+//       .limit(200)
+//       .lean();
+
+//     // preload authors for follower counts
+//     const authorUids = [...new Set(candidates.map((p: any) => p.authorUid))];
+//     const authors = await User.find({ uid: { $in: authorUids } })
+//       .select("uid followers")
+//       .lean();
+
+//     const authorMap = new Map(
+//       authors.map((a: any) => [a.uid, a])
+//     );
+
+//     // ---------- SCORE ----------
+//     const scored = candidates.map((p: any) => {
+//       let score = 0;
+
+//       const category = (p.category || "").toLowerCase();
+//       const tags: string[] = Array.isArray(p.tags)
+//         ? p.tags.map((t: string) => t.toLowerCase())
+//         : [];
+
+//       const affectedState = (p.affectedState || "").toLowerCase();
+
+//       if (interests.length) {
+//         const matched = tags.filter((t) => interests.includes(t)).length;
+//         score += matched * 3;
+//       }
+
+//       if (category && interests.includes(category)) {
+//         score += 2;
+//       }
+
+//       if (userState && affectedState && userState === affectedState) {
+//         score += 6;
+//       }
+
+//       return { ...p, score };
+//     });
+
+//     const withScore = scored.filter((p) => p.score > 0);
+//     const effectiveList =
+//       withScore.length > 0 ? withScore : scored.map((p) => ({ ...p, score: 0 }));
+
+//     effectiveList.sort((a, b) => {
+//       if (b.score !== a.score) return b.score - a.score;
+//       return (
+//         new Date(b.createdAt).getTime() -
+//         new Date(a.createdAt).getTime()
+//       );
+//     });
+
+//     const slice = effectiveList.slice(offset, offset + limit);
+
+//     // ---------- SERIALISE (🔥 FIX HERE) ----------
+//     const serialised = slice.map((p: any) => {
+//       const author = authorMap.get(p.authorUid);
+
+//       return {
+//         id: p._id.toString(),
+
+//         // 🔥 REQUIRED FOR FOLLOW FEATURE
+//         authorUid: p.authorUid,
+
+//         title: p.title,
+//         content: p.content,
+//         mediaUrl: p.mediaUrl || "",
+//         mediaType: p.mediaType || "none",
+//         category: p.category || "general",
+//         tags: Array.isArray(p.tags) ? p.tags : [],
+
+//         authorName: p.authorName || "",
+//         authorEmail: p.authorEmail || "",
+
+//         isFollowingAuthor: userDoc.followingCreators?.includes(p.authorUid),
+//         authorFollowersCount: author?.followers?.length || 0,
+
+//         createdAt: p.createdAt?.toISOString() || "",
+//         likesCount: p.likesCount || 0,
+//         dislikesCount: p.dislikesCount || 0,
+//         commentsCount: p.commentsCount || 0,
+//         score: p.score,
+//       };
+//     });
+
+//     return new Response(
+//       JSON.stringify({
+//         ok: true,
+//         posts: serialised,
+//         total: effectiveList.length,
+//         hasMore: offset + limit < effectiveList.length,
+//       }),
+//       { status: 200 }
+//     );
+//   } catch (err: any) {
+//     console.error("GET /api/news/for-you error:", err);
+//     const message = err?.message || "Server error";
+//     const status =
+//       message === "Unauthorized" || message === "Invalid token" ? 401 : 500;
+
+//     return new Response(JSON.stringify({ ok: false, error: message }), {
+//       status,
+//     });
+//   }
+// }
 
 
 
