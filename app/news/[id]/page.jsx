@@ -1,7 +1,7 @@
 //app/news/[id]/page.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
@@ -47,6 +47,13 @@ export default function NewsDetailPage() {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentsError, setCommentsError] = useState("");
+
+  // Reading progress (0 - 100)
+  const [readingProgress, setReadingProgress] = useState(0);
+
+  // Reference to the article DOM element
+  const articleRef = useRef(null);
+
 
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
@@ -102,6 +109,46 @@ export default function NewsDetailPage() {
       cancelled = true;
     };
   }, [id]);
+  useEffect(() => {
+    function handleScroll() {
+      if (!articleRef.current) return;
+
+      const article = articleRef.current;
+
+      const articleTop =
+        article.getBoundingClientRect().top + window.scrollY;
+
+      const articleHeight = article.offsetHeight;
+      const windowHeight = window.innerHeight;
+
+      const scrollY = window.scrollY;
+
+      // how much user has scrolled INSIDE the article
+      const scrolled = scrollY - articleTop;
+
+      const readableHeight = articleHeight - windowHeight;
+
+      // 👇 critical fix
+      if (scrolled <= 0) {
+        setReadingProgress(0);
+        return;
+      }
+
+      if (scrolled >= readableHeight) {
+        setReadingProgress(100);
+        return;
+      }
+
+      const progress = (scrolled / readableHeight) * 100;
+      setReadingProgress(progress);
+    }
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // run once on load
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
 
   async function handleReact(type) {
     if (!post) return;
@@ -187,6 +234,7 @@ export default function NewsDetailPage() {
     }
   }
 
+
   if (loadingPost) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg, #020617)]">
@@ -198,6 +246,7 @@ export default function NewsDetailPage() {
       </div>
     );
   }
+
 
   if (postError || !post) {
     return (
@@ -223,6 +272,23 @@ export default function NewsDetailPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg, var(--card-bg))] text-[var(--text-title,#e5e7eb)]">
+    {/* Reading progress bar */}
+    <div className="fixed top-0 left-0 w-full h-1 z-50 bg-transparent">
+      <div
+        className="h-full bg-orange-500 transition-[width] duration-100 ease-out"
+        style={{ width: `${readingProgress}%` }}
+      />
+    </div>
+
+    {/* {post && (
+      <div className="fixed top-0 left-0 w-full h-[3px] z-50 bg-transparent">
+        <div
+          className="h-full bg-orange-500 transition-[width] duration-150 ease-out"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
+    )} */}
+
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Back / breadcrumb */}
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -239,7 +305,7 @@ export default function NewsDetailPage() {
         </div>
 
         {/* Main article card */}
-        <article className="card overflow-hidden rounded-3xl border border-[var(--card-border)] shadow-md">
+        <article ref={articleRef} className="card overflow-hidden rounded-3xl border border-[var(--card-border)] shadow-md">
           {/* Image + overlay */}
           {post.mediaUrl && (
             <div className="relative w-full max-h-[420px] overflow-hidden">
