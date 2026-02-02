@@ -1,5 +1,6 @@
+// // // components/ArticleCard.jsx
 // // components/ArticleCard.jsx
-// components/ArticleCard.jsx
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
@@ -65,7 +66,25 @@ export default function ArticleCard({ article }) {
 
   return (
     <Link href={`/news/${article.id}`} className="block">
-      <article className="card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+      <article
+        className="
+          card
+          overflow-hidden
+          cursor-pointer
+
+          /* 🧱 stable base */
+          border border-[var(--card-border)]
+          rounded-2xl
+
+          /* ✨ subtle interaction */
+          hover:border-grey-500
+          hover:ring-1 hover:ring-grey-500/40
+          hover:shadow-lg
+
+          transition-colors transition-shadow
+          duration-200
+        "
+      >
         {/* IMAGE */}
         <div className="relative h-44 md:h-56">
           {article.mediaUrl ? (
@@ -154,7 +173,6 @@ export default function ArticleCard({ article }) {
               </button>
             </div>
 
-            {/* Optional: keep absolute date on the right */}
             <span className="text-xs opacity-70">
               {article.createdAt
                 ? new Date(article.createdAt).toLocaleDateString()
@@ -166,6 +184,182 @@ export default function ArticleCard({ article }) {
     </Link>
   );
 }
+
+
+
+
+
+
+
+
+
+
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import { toast } from "react-toastify";
+// import FollowButton from "./FollowButton";
+
+// /* ⏱ Time ago helper */
+// function timeAgo(isoDate) {
+//   if (!isoDate) return "";
+
+//   const diffMs = Date.now() - new Date(isoDate).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24)
+//     return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+
+//   const diffDays = Math.floor(diffHours / 24);
+//   if (diffDays < 7)
+//     return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+//   return new Date(isoDate).toLocaleDateString();
+// }
+
+// export default function ArticleCard({ article }) {
+//   const [isSaved, setIsSaved] = useState(false);
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//   }, [article]);
+
+//   async function toggleSave(e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//       toast.success(data.saved ? "Saved" : "Removed");
+//     } catch {
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <Link href={`/news/${article.id}`} className="block">
+//       <article className="card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+//         {/* IMAGE */}
+//         <div className="relative h-44 md:h-56">
+//           {article.mediaUrl ? (
+//             <img
+//               src={article.mediaUrl}
+//               alt={article.title}
+//               className="w-full h-full object-cover"
+//             />
+//           ) : (
+//             <div className="w-full h-full bg-gray-800" />
+//           )}
+//         </div>
+
+//         {/* CONTENT */}
+//         <div className="p-4">
+//           <h3 className="text-lg font-semibold line-clamp-2">
+//             {article.title}
+//           </h3>
+
+//           <p className="mt-2 text-sm text-gray-400 line-clamp-3">
+//             {article.content}
+//           </p>
+
+//           {/* 👇 PUBLISHER ROW */}
+//           <div className="mt-3 flex items-center justify-between text-xs">
+//             <div className="opacity-80 flex items-center gap-1 flex-wrap">
+//               <span>
+//                 by{" "}
+//                 <span className="font-semibold">
+//                   {article.authorName || "Unknown"}
+//                 </span>
+//               </span>
+
+//               {article.authorFollowersCount > 0 && (
+//                 <span className="opacity-60">
+//                   · {article.authorFollowersCount} followers
+//                 </span>
+//               )}
+
+//               {article.createdAt && (
+//                 <span className="opacity-60">
+//                   · {timeAgo(article.createdAt)}
+//                 </span>
+//               )}
+//             </div>
+
+//             <FollowButton
+//               authorUid={article.authorUid}
+//               initialIsFollowing={article.isFollowingAuthor}
+//               initialFollowersCount={article.authorFollowersCount}
+//             />
+//           </div>
+
+//           {/* ACTION BAR */}
+//           <div className="mt-4 flex items-center justify-between text-sm">
+//             <div className="flex gap-4 items-center">
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//               >
+//                 👍 {article.likesCount ?? 0}
+//               </button>
+
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//               >
+//                 👎 {article.dislikesCount ?? 0}
+//               </button>
+
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                 }}
+//               >
+//                 💬 {article.commentsCount ?? 0}
+//               </button>
+
+//               <button onClick={toggleSave}>
+//                 {isSaved ? "🔖" : "📑"}
+//               </button>
+//             </div>
+
+//             {/* Optional: keep absolute date on the right */}
+//             <span className="text-xs opacity-70">
+//               {article.createdAt
+//                 ? new Date(article.createdAt).toLocaleDateString()
+//                 : ""}
+//             </span>
+//           </div>
+//         </div>
+//       </article>
+//     </Link>
+//   );
+// }
 
 
 
