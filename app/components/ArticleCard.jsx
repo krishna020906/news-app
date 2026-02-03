@@ -6,6 +6,19 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import FollowButton from "./FollowButton";
+import {
+  HandThumbUpIcon as LikeOutline,
+  HandThumbDownIcon as DislikeOutline,
+  ChatBubbleLeftIcon as CommentOutline,
+  BookmarkIcon as SaveOutline,
+} from "@heroicons/react/24/outline";
+
+import {
+  HandThumbUpIcon as LikeSolid,
+  HandThumbDownIcon as DislikeSolid,
+  BookmarkIcon as SaveSolid,
+} from "@heroicons/react/24/solid";
+
 
 /* ⏱ Time ago helper */
 function timeAgo(isoDate) {
@@ -30,6 +43,9 @@ function timeAgo(isoDate) {
 
 export default function ArticleCard({ article }) {
   const [isSaved, setIsSaved] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+
 
   useEffect(() => {
     setIsSaved(article.isSaved || false);
@@ -77,8 +93,8 @@ export default function ArticleCard({ article }) {
           rounded-2xl
 
           /* ✨ subtle interaction */
-          hover:border-grey-500
-          hover:ring-1 hover:ring-grey-500/40
+          hover:border-gray-500
+          hover:ring-1 hover:ring-gray-500/40
           hover:shadow-lg
 
           transition-colors transition-shadow
@@ -140,36 +156,60 @@ export default function ArticleCard({ article }) {
 
           {/* ACTION BAR */}
           <div className="mt-4 flex items-center justify-between text-sm">
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-5 items-center">
+
+              {/* 👍 Like */}
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setLiked((v) => !v);
+                  if (disliked) setDisliked(false);
                 }}
+                className="flex items-center gap-1 transition-colors"
               >
-                👍 {article.likesCount ?? 0}
+                {liked ? (
+                  <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+                ) : (
+                  <LikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+                )}
+                <span>{article.likesCount ?? 0}</span>
               </button>
 
+              {/* 👎 Dislike */}
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setDisliked((v) => !v);
+                  if (liked) setLiked(false);
                 }}
+                className="flex items-center gap-1 transition-colors"
               >
-                👎 {article.dislikesCount ?? 0}
+                {disliked ? (
+                  <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+                ) : (
+                  <DislikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+                )}
+                <span>{article.dislikesCount ?? 0}</span>
               </button>
 
+              {/* 💬 Comment */}
+              <div className="flex items-center gap-1 opacity-70">
+                <CommentOutline className="w-5 h-5" />
+                <span>{article.commentsCount ?? 0}</span>
+              </div>
+
+              {/* 🔖 Save */}
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
+                onClick={toggleSave}
+                className="transition-colors"
               >
-                💬 {article.commentsCount ?? 0}
-              </button>
-
-              <button onClick={toggleSave}>
-                {isSaved ? "🔖" : "📑"}
+                {isSaved ? (
+                  <SaveSolid className="w-5 h-5 text-[var(--button-bg)]" />
+                ) : (
+                  <SaveOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+                )}
               </button>
             </div>
 
@@ -179,6 +219,7 @@ export default function ArticleCard({ article }) {
                 : ""}
             </span>
           </div>
+
         </div>
       </article>
     </Link>
