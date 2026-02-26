@@ -8,16 +8,72 @@ export default function PostNewsButton() {
   return (
     <button
       onClick={() => router.push("/post-news")}
-      className="hidden md:block px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap hover:opacity-95 transition"
+      className="hidden hover:shadow-lg hover:brightness-110  md:inline-flex items-center gap-3 px-3 py-2 rounded-full font-semibold text-sm relative overflow-hidden transition-colors duration-300 group"
       style={{
         background: "var(--button-bg)",
-        color: "var(--button-text)",
+        color: "white",
       }}
     >
-      Post News
+      {/* ICON WRAPPER */}
+      <span className="relative flex items-center justify-center w-6 h-6 rounded-full bg-white overflow-hidden">
+        
+        {/* ORIGINAL ICON */}
+        <svg
+          className="absolute w-3 h-3 text-[var(--button-bg)] transition-transform duration-300 ease-in-out group-hover:translate-x-6 group-hover:-translate-y-6"
+          viewBox="0 0 14 15"
+          fill="none"
+        >
+          <path
+            fill="currentColor"
+            d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
+          />
+        </svg>
+
+        {/* DUPLICATE ICON */}
+        <svg
+          className="absolute w-3 h-3 text-[var(--button-bg)] translate-x-[-24px] translate-y-[24px] transition-transform duration-300 ease-in-out group-hover:translate-x-0 group-hover:translate-y-0"
+          viewBox="0 0 14 15"
+          fill="none"
+        >
+          <path
+            fill="currentColor"
+            d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
+          />
+        </svg>
+      </span>
+
+      <span className="relative z-10">Post News</span>
     </button>
   );
 }
+
+
+
+
+
+
+
+
+// "use client";
+
+// import { useRouter } from "next/navigation";
+
+// export default function PostNewsButton() {
+//   const router = useRouter();
+
+//   return (
+//     <button
+//       onClick={() => router.push("/post-news")}
+//       className="hidden md:block px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap hover:opacity-95 transition"
+//       style={{
+//         background: "var(--button-bg)",
+//         color: "var(--button-text)",
+//       }}
+//     >
+//       Post News
+//     </button>
+//   );
+// }
 
 
 

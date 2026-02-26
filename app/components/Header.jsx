@@ -109,26 +109,17 @@ export default function Header({ onSearch }) {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
-          {/* 🔥 CONDITIONAL BUTTON */}
-          {!user ? (
-            <Signup /> // 👈 NOT logged in → Sign Up
-          ) : (
-            <button
-              className="hidden md:block px-3 py-2 rounded-md text-sm font-medium"
-              style={{
-                background: "var(--button-bg)",
-                color: "var(--button-text)",
-              }}
-            >
-              Get Started
-            </button>
-          )}
+          {/* Show signup only when not logged in */}
+         {!user && <Signup/>}
+        </div>
+
+          
 
           <PostNewsButton />
           <MyNewsButton />
           <ProfileButton />
         </div>
-      </div>
+      
 
       {/* SEARCH (MOBILE) */}
       <div className="md:hidden px-4 pb-3">

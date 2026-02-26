@@ -1,11 +1,10 @@
-// // // components/ArticleCard.jsx
-// // components/ArticleCard.jsx
-
+// components/ArticleCard.jsx
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import FollowButton from "./FollowButton";
+
 import {
   HandThumbUpIcon as LikeOutline,
   HandThumbDownIcon as DislikeOutline,
@@ -19,37 +18,83 @@ import {
   BookmarkIcon as SaveSolid,
 } from "@heroicons/react/24/solid";
 
-
-/* ⏱ Time ago helper */
-function timeAgo(isoDate) {
-  if (!isoDate) return "";
-
-  const diffMs = Date.now() - new Date(isoDate).getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24)
-    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7)
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-
-  return new Date(isoDate).toLocaleDateString();
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
 export default function ArticleCard({ article }) {
   const [isSaved, setIsSaved] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+  const [likesCount, setLikesCount] = useState(article.likesCount ?? 0);
+  const [dislikesCount, setDislikesCount] = useState(article.dislikesCount ?? 0);
 
-
+  /* 🔑 hydrate from backend */
   useEffect(() => {
     setIsSaved(article.isSaved || false);
+    setLikesCount(article.likesCount ?? 0);
+    setDislikesCount(article.dislikesCount ?? 0);
+
+    if (article.userReaction === "like") {
+      setLiked(true);
+      setDisliked(false);
+    } else if (article.userReaction === "dislike") {
+      setDisliked(true);
+      setLiked(false);
+    } else {
+      setLiked(false);
+      setDisliked(false);
+    }
   }, [article]);
+
+  async function handleReaction(type, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("article.userReaction:", article.userReaction);
+
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        toast.info("Login to react");
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/news/${article.id}/reaction`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error();
+
+      setLikesCount(data.post.likesCount);
+      setDislikesCount(data.post.dislikesCount);
+
+      if (type === "like") {
+        setLiked((v) => !v);
+        setDisliked(false);
+      } else {
+        setDisliked((v) => !v);
+        setLiked(false);
+      }
+    } catch {
+      toast.error("Failed to react");
+    }
+  }
 
   async function toggleSave(e) {
     e.preventDefault();
@@ -58,11 +103,7 @@ export default function ArticleCard({ article }) {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-
-      if (!user) {
-        toast.info("Login to save news");
-        return;
-      }
+      if (!user) return toast.info("Login to save");
 
       const token = await user.getIdToken();
       const res = await fetch(`/api/news/${article.id}/save`, {
@@ -71,50 +112,24 @@ export default function ArticleCard({ article }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
+      if (!res.ok) throw new Error();
       setIsSaved(data.saved);
-      toast.success(data.saved ? "Saved" : "Removed");
     } catch {
-      toast.error("Something went wrong");
+      toast.error("Save failed");
     }
   }
 
   return (
     <Link href={`/news/${article.id}`} className="block">
-      <article
-        className="
-          card
-          overflow-hidden
-          cursor-pointer
-
-          /* 🧱 stable base */
-          border border-[var(--card-border)]
-          rounded-2xl
-
-          /* ✨ subtle interaction */
-          hover:border-gray-500
-          hover:ring-1 hover:ring-gray-500/40
-          hover:shadow-lg
-
-          transition-colors transition-shadow
-          duration-200
-        "
-      >
-        {/* IMAGE */}
+      <article className="card border border-[var(--card-border)] rounded-2xl hover:ring-1 hover:ring-grey-500/40 transition">
         <div className="relative h-44 md:h-56">
           {article.mediaUrl ? (
-            <img
-              src={article.mediaUrl}
-              alt={article.title}
-              className="w-full h-full object-cover"
-            />
+            <img src={article.mediaUrl} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gray-800" />
           )}
         </div>
 
-        {/* CONTENT */}
         <div className="p-4">
           <h3 className="text-lg font-semibold line-clamp-2">
             {article.title}
@@ -124,29 +139,11 @@ export default function ArticleCard({ article }) {
             {article.content}
           </p>
 
-          {/* 👇 PUBLISHER ROW */}
-          <div className="mt-3 flex items-center justify-between text-xs">
-            <div className="opacity-80 flex items-center gap-1 flex-wrap">
-              <span>
-                by{" "}
-                <span className="font-semibold">
-                  {article.authorName || "Unknown"}
-                </span>
-              </span>
-
-              {article.authorFollowersCount > 0 && (
-                <span className="opacity-60">
-                  · {article.authorFollowersCount} followers
-                </span>
-              )}
-
-              {article.createdAt && (
-                <span className="opacity-60">
-                  · {timeAgo(article.createdAt)}
-                </span>
-              )}
-            </div>
-
+          <div className="mt-3 flex justify-between text-xs">
+            <span>
+              by <b>{article.authorName || "Unknown"}</b> ·{" "}
+              {timeAgo(article.createdAt)}
+            </span>
             <FollowButton
               authorUid={article.authorUid}
               initialIsFollowing={article.isFollowingAuthor}
@@ -154,77 +151,476 @@ export default function ArticleCard({ article }) {
             />
           </div>
 
-          {/* ACTION BAR */}
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <div className="flex gap-5 items-center">
+          <div className="mt-4 flex gap-5 items-center text-sm">
+            <button onClick={(e) => handleReaction("like", e)} className="flex gap-1">
+              {liked ? <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" /> : <LikeOutline className="w-5 h-5 opacity-70" />}
+              {likesCount}
+            </button>
 
-              {/* 👍 Like */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setLiked((v) => !v);
-                  if (disliked) setDisliked(false);
-                }}
-                className="flex items-center gap-1 transition-colors"
-              >
-                {liked ? (
-                  <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
-                ) : (
-                  <LikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
-                )}
-                <span>{article.likesCount ?? 0}</span>
-              </button>
+            <button onClick={(e) => handleReaction("dislike", e)} className="flex gap-1">
+              {disliked ? <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" /> : <DislikeOutline className="w-5 h-5 opacity-70" />}
+              {dislikesCount}
+            </button>
 
-              {/* 👎 Dislike */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDisliked((v) => !v);
-                  if (liked) setLiked(false);
-                }}
-                className="flex items-center gap-1 transition-colors"
-              >
-                {disliked ? (
-                  <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
-                ) : (
-                  <DislikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
-                )}
-                <span>{article.dislikesCount ?? 0}</span>
-              </button>
-
-              {/* 💬 Comment */}
-              <div className="flex items-center gap-1 opacity-70">
-                <CommentOutline className="w-5 h-5" />
-                <span>{article.commentsCount ?? 0}</span>
-              </div>
-
-              {/* 🔖 Save */}
-              <button
-                onClick={toggleSave}
-                className="transition-colors"
-              >
-                {isSaved ? (
-                  <SaveSolid className="w-5 h-5 text-[var(--button-bg)]" />
-                ) : (
-                  <SaveOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
-                )}
-              </button>
+            <div className="flex gap-1 opacity-70">
+              <CommentOutline className="w-5 h-5" />
+              {article.commentsCount ?? 0}
             </div>
 
-            <span className="text-xs opacity-70">
-              {article.createdAt
-                ? new Date(article.createdAt).toLocaleDateString()
-                : ""}
-            </span>
+            <button onClick={toggleSave}>
+              {isSaved ? <SaveSolid className="w-5 h-5 text-[var(--button-bg)]" /> : <SaveOutline className="w-5 h-5 opacity-70" />}
+            </button>
           </div>
-
         </div>
       </article>
     </Link>
   );
 }
+
+
+
+
+
+
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import { toast } from "react-toastify";
+// import FollowButton from "./FollowButton";
+// import Reaction from "@/backend/models/Reaction";
+
+
+// import {
+//   HandThumbUpIcon as LikeOutline,
+//   HandThumbDownIcon as DislikeOutline,
+//   ChatBubbleLeftIcon as CommentOutline,
+//   BookmarkIcon as SaveOutline,
+// } from "@heroicons/react/24/outline";
+
+// import {
+//   HandThumbUpIcon as LikeSolid,
+//   HandThumbDownIcon as DislikeSolid,
+//   BookmarkIcon as SaveSolid,
+// } from "@heroicons/react/24/solid";
+
+// /* ⏱ Time ago helper */
+// function timeAgo(isoDate) {
+//   if (!isoDate) return "";
+//   const diffMs = Date.now() - new Date(isoDate).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+//   const diffDays = Math.floor(diffHours / 24);
+//   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+//   return new Date(isoDate).toLocaleDateString();
+// }
+
+// export default function ArticleCard({ article }) {
+//   const [isSaved, setIsSaved] = useState(false);
+//   const [liked, setLiked] = useState(false);
+//   const [disliked, setDisliked] = useState(false);
+
+//   const [likesCount, setLikesCount] = useState(article.likesCount ?? 0);
+//   const [dislikesCount, setDislikesCount] = useState(article.dislikesCount ?? 0);
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//     setLikesCount(article.likesCount ?? 0);
+//     setDislikesCount(article.dislikesCount ?? 0);
+//   }, [article]);
+//   useEffect(() => {
+//     if (article.userReaction === "like") {
+//       setLiked(true);
+//       setDisliked(false);
+//     } else if (article.userReaction === "dislike") {
+//       setDisliked(true);
+//       setLiked(false);
+//     } else {
+//       setLiked(false);
+//       setDisliked(false);
+//     }
+//   }, [article.userReaction]);
+
+
+//   async function handleReaction(type, e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+
+//       if (!user) {
+//         toast.info("Login to react");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+
+//       const res = await fetch(`/api/news/${article.id}/reaction`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({ type }),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok || !data.ok) {
+//         throw new Error(data.error || "Failed to react");
+//       }
+
+//       // ✅ Backend is source of truth
+//       setLikesCount(data.post.likesCount);
+//       setDislikesCount(data.post.dislikesCount);
+
+//       if (type === "like") {
+//         setLiked((prev) => !prev);
+//         setDisliked(false);
+//       } else {
+//         setDisliked((prev) => !prev);
+//         setLiked(false);
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       toast.error("Failed to update reaction");
+//     }
+//   }
+
+//   async function toggleSave(e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//     } catch {
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <Link href={`/news/${article.id}`} className="block">
+//       <article className="card border border-[var(--card-border)] rounded-2xl hover:ring-1 hover:ring-orange-500/40 transition">
+//         <div className="relative h-44 md:h-56">
+//           {article.mediaUrl ? (
+//             <img src={article.mediaUrl} alt={article.title} className="w-full h-full object-cover" />
+//           ) : (
+//             <div className="w-full h-full bg-gray-800" />
+//           )}
+//         </div>
+
+//         <div className="p-4">
+//           <h3 className="text-lg font-semibold line-clamp-2">{article.title}</h3>
+
+//           <p className="mt-2 text-sm text-gray-400 line-clamp-3">
+//             {article.content}
+//           </p>
+
+//           <div className="mt-3 flex items-center justify-between text-xs">
+//             <span className="opacity-80">
+//               by <strong>{article.authorName || "Unknown"}</strong> · {timeAgo(article.createdAt)}
+//             </span>
+//             <FollowButton
+//               authorUid={article.authorUid}
+//               initialIsFollowing={article.isFollowingAuthor}
+//               initialFollowersCount={article.authorFollowersCount}
+//             />
+//           </div>
+
+//           {/* ACTION BAR */}
+//           <div className="mt-4 flex items-center justify-between text-sm">
+//             <div className="flex gap-5 items-center">
+//               <button onClick={(e) => handleReaction("like", e)} className="flex items-center gap-1">
+//                 {liked ? (
+//                   <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <LikeOutline className="w-5 h-5 opacity-70" />
+//                 )}
+//                 <span>{likesCount}</span>
+//               </button>
+
+//               <button onClick={(e) => handleReaction("dislike", e)} className="flex items-center gap-1">
+//                 {disliked ? (
+//                   <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <DislikeOutline className="w-5 h-5 opacity-70" />
+//                 )}
+//                 <span>{dislikesCount}</span>
+//               </button>
+
+//               <div className="flex items-center gap-1 opacity-70">
+//                 <CommentOutline className="w-5 h-5" />
+//                 <span>{article.commentsCount ?? 0}</span>
+//               </div>
+
+//               <button onClick={toggleSave}>
+//                 {isSaved ? (
+//                   <SaveSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <SaveOutline className="w-5 h-5 opacity-70" />
+//                 )}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </article>
+//     </Link>
+//   );
+// }
+
+
+
+
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import { toast } from "react-toastify";
+// import FollowButton from "./FollowButton";
+// import {
+//   HandThumbUpIcon as LikeOutline,
+//   HandThumbDownIcon as DislikeOutline,
+//   ChatBubbleLeftIcon as CommentOutline,
+//   BookmarkIcon as SaveOutline,
+// } from "@heroicons/react/24/outline";
+
+// import {
+//   HandThumbUpIcon as LikeSolid,
+//   HandThumbDownIcon as DislikeSolid,
+//   BookmarkIcon as SaveSolid,
+// } from "@heroicons/react/24/solid";
+
+
+// /* ⏱ Time ago helper */
+// function timeAgo(isoDate) {
+//   if (!isoDate) return "";
+
+//   const diffMs = Date.now() - new Date(isoDate).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24)
+//     return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+
+//   const diffDays = Math.floor(diffHours / 24);
+//   if (diffDays < 7)
+//     return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+//   return new Date(isoDate).toLocaleDateString();
+// }
+
+// export default function ArticleCard({ article }) {
+//   const [isSaved, setIsSaved] = useState(false);
+//   const [liked, setLiked] = useState(false);
+//   const [disliked, setDisliked] = useState(false);
+//   const [likesCount, setLikesCount] = useState(article.likesCount ?? 0);
+//   const [dislikesCount, setDislikesCount] = useState(article.dislikesCount ?? 0);
+
+
+//   useEffect(() => {
+//     setIsSaved(article.isSaved || false);
+//   }, [article]);
+
+//   useEffect(() => {
+//     setLikesCount(article.likesCount ?? 0);
+//     setDislikesCount(article.dislikesCount ?? 0);
+//   }, [article]);
+
+//   async function toggleSave(e) {
+//     e.preventDefault();
+//     e.stopPropagation();
+
+//     try {
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+
+//       if (!user) {
+//         toast.info("Login to save news");
+//         return;
+//       }
+
+//       const token = await user.getIdToken();
+//       const res = await fetch(`/api/news/${article.id}/save`, {
+//         method: "POST",
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error);
+
+//       setIsSaved(data.saved);
+//       toast.success(data.saved ? "Saved" : "Removed");
+//     } catch {
+//       toast.error("Something went wrong");
+//     }
+//   }
+
+//   return (
+//     <Link href={`/news/${article.id}`} className="block">
+//       <article
+//         className="
+//           card
+//           overflow-hidden
+//           cursor-pointer
+
+//           /* 🧱 stable base */
+//           border border-[var(--card-border)]
+//           rounded-2xl
+
+//           /* ✨ subtle interaction */
+//           hover:border-gray-500
+//           hover:ring-1 hover:ring-gray-500/40
+//           hover:shadow-lg
+
+//           transition-colors transition-shadow
+//           duration-200
+//         "
+//       >
+//         {/* IMAGE */}
+//         <div className="relative h-44 md:h-56">
+//           {article.mediaUrl ? (
+//             <img
+//               src={article.mediaUrl}
+//               alt={article.title}
+//               className="w-full h-full object-cover"
+//             />
+//           ) : (
+//             <div className="w-full h-full bg-gray-800" />
+//           )}
+//         </div>
+
+//         {/* CONTENT */}
+//         <div className="p-4">
+//           <h3 className="text-lg font-semibold line-clamp-2">
+//             {article.title}
+//           </h3>
+
+//           <p className="mt-2 text-sm text-gray-400 line-clamp-3">
+//             {article.content}
+//           </p>
+
+//           {/* 👇 PUBLISHER ROW */}
+//           <div className="mt-3 flex items-center justify-between text-xs">
+//             <div className="opacity-80 flex items-center gap-1 flex-wrap">
+//               <span>
+//                 by{" "}
+//                 <span className="font-semibold">
+//                   {article.authorName || "Unknown"}
+//                 </span>
+//               </span>
+
+//               {article.authorFollowersCount > 0 && (
+//                 <span className="opacity-60">
+//                   · {article.authorFollowersCount} followers
+//                 </span>
+//               )}
+
+//               {article.createdAt && (
+//                 <span className="opacity-60">
+//                   · {timeAgo(article.createdAt)}
+//                 </span>
+//               )}
+//             </div>
+
+//             <FollowButton
+//               authorUid={article.authorUid}
+//               initialIsFollowing={article.isFollowingAuthor}
+//               initialFollowersCount={article.authorFollowersCount}
+//             />
+//           </div>
+
+//           {/* ACTION BAR */}
+//           <div className="mt-4 flex items-center justify-between text-sm">
+//             <div className="flex gap-5 items-center">
+
+//               {/* 👍 Like */}
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                   setLiked((v) => !v);
+//                   if (disliked) setDisliked(false);
+//                 }}
+//                 className="flex items-center gap-1 transition-colors"
+//               >
+//                 {liked ? (
+//                   <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <LikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+//                 )}
+//                 <span>{article.likesCount ?? 0}</span>
+//               </button>
+
+//               {/* 👎 Dislike */}
+//               <button
+//                 onClick={(e) => {
+//                   e.preventDefault();
+//                   e.stopPropagation();
+//                   setDisliked((v) => !v);
+//                   if (liked) setLiked(false);
+//                 }}
+//                 className="flex items-center gap-1 transition-colors"
+//               >
+//                 {disliked ? (
+//                   <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <DislikeOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+//                 )}
+//                 <span>{article.dislikesCount ?? 0}</span>
+//               </button>
+
+//               {/* 💬 Comment */}
+//               <div className="flex items-center gap-1 opacity-70">
+//                 <CommentOutline className="w-5 h-5" />
+//                 <span>{article.commentsCount ?? 0}</span>
+//               </div>
+
+//               {/* 🔖 Save */}
+//               <button
+//                 onClick={toggleSave}
+//                 className="transition-colors"
+//               >
+//                 {isSaved ? (
+//                   <SaveSolid className="w-5 h-5 text-[var(--button-bg)]" />
+//                 ) : (
+//                   <SaveOutline className="w-5 h-5 opacity-70 hover:opacity-100" />
+//                 )}
+//               </button>
+//             </div>
+
+//             <span className="text-xs opacity-70">
+//               {article.createdAt
+//                 ? new Date(article.createdAt).toLocaleDateString()
+//                 : ""}
+//             </span>
+//           </div>
+
+//         </div>
+//       </article>
+//     </Link>
+//   );
+// }
 
 
 

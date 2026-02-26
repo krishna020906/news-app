@@ -34,6 +34,64 @@
     transform: translateY(0);
   }
 }
+
+/* Animated Pill Button (Signup style) */
+
+.btn-animated {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-animated .original {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--button-bg);
+  color: var(--button-text);
+  transition: transform 0.3s cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+.btn-animated:hover .original {
+  transform: translateY(100%);
+}
+
+.btn-animated .letters {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.btn-animated .letters span {
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: transform 0.3s cubic-bezier(0.87, 0, 0.13, 1),
+              opacity 0.3s;
+}
+
+.btn-animated:hover .letters span {
+  opacity: 1;
+  transform: translateY(0);
+}
+.btn-animated {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.btn-animated:hover {
+  transform: translateY(-2px);
+}
+
+/* stagger effect */
+.btn-animated:hover .letters span:nth-child(1) { transition-delay: 0.05s; }
+.btn-animated:hover .letters span:nth-child(2) { transition-delay: 0.1s; }
+.btn-animated:hover .letters span:nth-child(3) { transition-delay: 0.15s; }
+.btn-animated:hover .letters span:nth-child(4) { transition-delay: 0.2s; }
+.btn-animated:hover .letters span:nth-child(5) { transition-delay: 0.25s; }
+.btn-animated:hover .letters span:nth-child(6) { transition-delay: 0.3s; }
+.btn-animated:hover .letters span:nth-child(7) { transition-delay: 0.35s; }
+.btn-animated:hover .letters span:nth-child(8) { transition-delay: 0.4s; }
 /* smooth scroll shadows */
 .scroll-container::before,
 .scroll-container::after {

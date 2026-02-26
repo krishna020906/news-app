@@ -67,6 +67,11 @@ export default function MainPage() {
           },
         });
 
+        if (!res.ok) {
+          console.error("API failed:", res.status);
+          return;
+        }
+
         const data = await res.json();
         setStreak(data.streak ?? 0);
       } catch (err) {
