@@ -93,7 +93,7 @@ export default function Header({ onSearch }) {
             onChange={setQuery}
             onSubmit={runSearch}
           />
-          <button
+          {/* <button
             onClick={runSearch}
             className="px-3 py-2 rounded-md"
             style={{
@@ -102,27 +102,32 @@ export default function Header({ onSearch }) {
             }}
           >
             Search
-          </button>
+          </button> */}
         </div>
 
  
 
         {/* RIGHT */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ">
           {/* Show signup only when not logged in */}
          {!user && <Signup/>}
-        </div>
-
-          
-
           <PostNewsButton />
           <MyNewsButton />
           <ProfileButton />
         </div>
+
+          
+
+            {/* <div className="gap-3 flex items-center">
+              <PostNewsButton />
+              <MyNewsButton />
+              <ProfileButton />
+            </div> */}
+        </div>
       
 
       {/* SEARCH (MOBILE) */}
-      <div className="md:hidden px-4 pb-3">
+      <div className="md:hidden w-full px-4 pb-3">
         <SearchBar
           value={query}
           onChange={setQuery}
