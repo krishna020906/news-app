@@ -2,6 +2,8 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   HomeIcon,
@@ -19,12 +21,34 @@ import { getAuth, signOut } from "firebase/auth";
 
 export default function LeftSidebar() {
   const [expanded, setExpanded] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-
+  // const [darkMode, setDarkMode] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [theme, setTheme] = useState(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem("theme");
+      if (t) {
+        setTheme(t);
+      } else {
+        const prefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+    } catch {
+      setTheme("light");
+    }
+  }, []);
+  useEffect(() => {
+    if (!theme) return;
+
+    localStorage.setItem("theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const NAV_ITEMS = [
     { key: "home", label: "Top Headlines", href: "/?tab=top", icon: HomeIcon },
@@ -41,10 +65,10 @@ export default function LeftSidebar() {
     router.push("/");
   };
 
-  const toggleDark = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle("dark");
-  };
+  // const toggleDark = () => {
+  //   setDarkMode(!darkMode);
+  //   document.documentElement.classList.toggle("dark");
+  // };
 
   return (
     <aside className="hidden md:flex h-screen">
@@ -131,31 +155,35 @@ export default function LeftSidebar() {
         <div className="p-4 space-y-4">
 
           {/* Dark Mode */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <MoonIcon className="w-5 h-5 text-[var(--text-body)]" />
-              {expanded && <span className="text-sm">Dark Mode</span>}
-            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <MoonIcon className="w-5 h-5 text-[var(--text-body)]" />
+                {expanded && <span className="text-sm">Dark Mode</span>}
+              </div>
 
-            {expanded && (
-              <button
-                onClick={toggleDark}
-                className={`relative w-10 h-5 rounded-full transition ${
-                  darkMode ? "bg-orange-500" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0 left-0 h-5 w-5 bg-white rounded-full shadow transition-transform ${
-                    darkMode ? "translate-x-5" : ""
+              {expanded && (
+                <button
+                  onClick={() =>
+                    setTheme((prev) => (prev === "dark" ? "light" : "dark"))
+                  }
+                  className={`relative w-10 h-5 rounded-full transition ${
+                    theme === "dark"
+                      ? "bg-orange-500"
+                      : "bg-gray-300"
                   }`}
-                />
-              </button>
-            )}
-          </div>
+                >
+                  <span
+                    className={`absolute top-0 left-0 h-5 w-5 bg-white rounded-full shadow transition-transform ${
+                      theme === "dark" ? "translate-x-5" : ""
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
 
           {/* Logout */}
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="group flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-red-500/10 transition"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-red-500 transition" />
@@ -167,6 +195,50 @@ export default function LeftSidebar() {
           </button>
         </div>
       </div>
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div
+            className="w-[320px] rounded-2xl p-6 shadow-xl"
+            style={{
+              background: "var(--card-bg)",
+              border: "1px solid var(--card-border)",
+            }}
+          >
+            <h3
+              className="text-lg font-semibold mb-3"
+              style={{ color: "var(--text-title)" }}
+            >
+              Confirm Logout
+            </h3>
+
+            <p
+              className="text-sm mb-6"
+              style={{ color: "var(--text-body)" }}
+            >
+              Are you sure you want to logout?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-4 py-2 rounded-xl text-sm hover:bg-gray-500/10 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  setShowLogoutConfirm(false);
+                  await handleLogout();
+                }}
+                className="px-4 py-2 rounded-xl text-sm text-white bg-red-500 hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
