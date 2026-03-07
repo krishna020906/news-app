@@ -1,4 +1,4 @@
-// backend/models/Comment.ts
+// // backend/models/Comment.ts
 import mongoose from "mongoose";
 
 const CommentSchema = new mongoose.Schema(
@@ -6,33 +6,92 @@ const CommentSchema = new mongoose.Schema(
     newsId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "News",
-      index: true,
       required: true,
+      index: true,
     },
+
     userUid: {
       type: String,
-      index: true,
       required: true,
+      index: true,
     },
-    userName: {
-      type: String,
-    },
-    userEmail: {
-      type: String,
-    },
+
+    userName: String,
+    userEmail: String,
+
     text: {
       type: String,
       required: true,
       trim: true,
     },
+
+    /* 👍 likes */
+    likes: {
+      type: [String], // userUid
+      default: [],
+    },
+
+    /* 👎 dislikes */
+    dislikes: {
+      type: [String],
+      default: [],
+    },
+
+    /* 💬 replies */
+    parentCommentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+      index: true,
+    },
   },
-  {
-    timestamps: true, // createdAt, updatedAt
-  }
+  { timestamps: true }
 );
 
-// For fast listing per post
 CommentSchema.index({ newsId: 1, createdAt: -1 });
 
 export default mongoose.models.Comment ||
   mongoose.model("Comment", CommentSchema);
+
+
+
+
+
+
+// import mongoose from "mongoose";
+
+// const CommentSchema = new mongoose.Schema(
+//   {
+//     newsId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "News",
+//       index: true,
+//       required: true,
+//     },
+//     userUid: {
+//       type: String,
+//       index: true,
+//       required: true,
+//     },
+//     userName: {
+//       type: String,
+//     },
+//     userEmail: {
+//       type: String,
+//     },
+//     text: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//   },
+//   {
+//     timestamps: true, // createdAt, updatedAt
+//   }
+// );
+
+// // For fast listing per post
+// CommentSchema.index({ newsId: 1, createdAt: -1 });
+
+// export default mongoose.models.Comment ||
+//   mongoose.model("Comment", CommentSchema);

@@ -1,5 +1,5 @@
 
-
+// /api/components/newsfeed.jsx
 "use client";
 
 import { useEffect, useState } from "react";

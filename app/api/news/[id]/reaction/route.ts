@@ -180,7 +180,7 @@ export async function GET(
       post: {
         id: post._id.toString(),
         title: post.title,
-        content: post.content,cmd
+        content: post.content,
         mediaUrl: post.mediaUrl || "",
         mediaType: post.mediaType || "none",
         category: post.category || "general",

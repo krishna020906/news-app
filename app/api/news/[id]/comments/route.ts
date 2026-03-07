@@ -15,6 +15,9 @@ export async function GET(
     await connectToDatabase();
     const { id } = await context.params;
 
+    const { searchParams } = new URL(req.url);
+    const sort = searchParams.get("sort");
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { ok: false, error: "Invalid post id" },
@@ -22,10 +25,33 @@ export async function GET(
       );
     }
 
-    const comments = await Comment.find({ newsId: id })
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .lean();
+    let comments;
+
+    if (sort === "new") {
+      comments = await Comment.find({
+        newsId: id,
+        parentCommentId: null,
+      })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean();
+    } else {
+      comments = await Comment.aggregate([
+        {
+          $match: {
+            newsId: new mongoose.Types.ObjectId(id),
+            parentCommentId: null,
+          },
+        },
+        {
+          $addFields: {
+            likeCount: { $size: { $ifNull: ["$likes", []] } },
+          },
+        },
+        { $sort: { likeCount: -1 } },
+        { $limit: 100 },
+      ]);
+    }
 
     const serialised = comments.map((c: any) => ({
       id: c._id.toString(),
@@ -33,17 +59,56 @@ export async function GET(
       userName: c.userName || c.userEmail || "Anonymous",
       userEmail: c.userEmail || "",
       createdAt: c.createdAt?.toISOString() || "",
+      likes: c.likes?.length || 0,
+      dislikes: c.dislikes?.length || 0,
     }));
 
-    return NextResponse.json({ ok: true, comments: serialised }, { status: 200 });
+    return NextResponse.json({ ok: true, comments: serialised });
   } catch (err: any) {
-    console.error("GET /api/news/[id]/comments error:", err);
+    console.error(err);
     return NextResponse.json(
       { ok: false, error: "Internal error" },
       { status: 500 }
     );
   }
 }
+// export async function GET(
+//   req: NextRequest,
+//   context: { params: Promise<{ id: string }> }
+// ) {
+//   try {
+//     await connectToDatabase();
+//     const { id } = await context.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return NextResponse.json(
+//         { ok: false, error: "Invalid post id" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const comments = await Comment.find({ newsId: id })
+//       .sort({ createdAt: -1 })
+//       .limit(100)
+//       .lean();
+
+//     const serialised = comments.map((c: any) => ({
+//       id: c._id.toString(),
+//       text: c.text,
+//       userName: c.userName || c.userEmail || "Anonymous",
+//       userEmail: c.userEmail || "",
+//       createdAt: c.createdAt?.toISOString() || "",
+//     }));
+
+//     return NextResponse.json({ ok: true, comments: serialised }, { status: 200 });
+//   } catch (err: any) {
+//     console.error("GET /api/news/[id]/comments error:", err);
+//     return NextResponse.json(
+//       { ok: false, error: "Internal error" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 // POST /api/news/[id]/comments -> add a comment (authed)
 export async function POST(
@@ -87,14 +152,22 @@ export async function POST(
         { status: 404 }
       );
     }
-
     const comment = await Comment.create({
       newsId: news._id,
       userUid: decoded.uid,
       userName: decoded.name || undefined,
       userEmail: decoded.email || undefined,
       text,
+      parentCommentId: body.parentCommentId || null,
     });
+
+    // const comment = await Comment.create({
+    //   newsId: news._id,
+    //   userUid: decoded.uid,
+    //   userName: decoded.name || undefined,
+    //   userEmail: decoded.email || undefined,
+    //   text,
+    // });
 
     // increment commentsCount on News
     await News.updateOne(

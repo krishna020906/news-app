@@ -10,6 +10,7 @@ import Recommendation from "./Recommendation";
 import MobileNav from "./MobileNav";
 import ArticleModal from "./ArticleModal";
 import NewsFeed from "./NewsFeed";
+
 import LeftSidebar from "./LeftSidebar";
 import { useRouter, useSearchParams } from "next/navigation";
 import StreakWidget from "./StreakWidget"
@@ -130,6 +131,7 @@ export default function MainPage() {
               router.push(`/news/${article.id}`);
             }}
           />
+          
           
           
         </section>

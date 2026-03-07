@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
+import CommentItem from "../../components/CommentItem";
 
 function formatTimeAgo(iso) {
   if (!iso) return "";
@@ -580,24 +581,21 @@ export default function NewsDetailPage() {
                   No comments yet. Be the first one to share your view.
                 </p>
               ) : (
-                <ul className="space-y-3">
+                <div className="space-y-4">
                   {comments.map((c) => (
-                    <li
+                    <CommentItem
                       key={c.id}
-                      className="p-3 rounded-2xl bg-[var(--badge-bg)]/80"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold">
-                          {c.userName}
-                        </span>
-                        <span className="text-[10px] opacity-70">
-                          {formatTimeAgo(c.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-xs card-body">{c.text}</p>
-                    </li>
+                      comment={c}
+                      postId={post.id}
+                      currentUser={getAuth().currentUser?.uid}
+                      refreshComments={async () => {
+                        const res = await fetch(`/api/news/${post.id}/comments`);
+                        const data = await res.json();
+                        if (data.ok) setComments(data.comments);
+                      }}
+                    />
                   ))}
-                </ul>
+                </div>
               )}
             </section>
           </div>

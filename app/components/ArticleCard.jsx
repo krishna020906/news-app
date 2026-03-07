@@ -1,4 +1,5 @@
 // components/ArticleCard.jsx
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";

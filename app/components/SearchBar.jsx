@@ -52,7 +52,7 @@ export default function SearchBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Find interesting news"
-          className="block w-full py-3 pl-10 pr-28 text-sm rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="block border  w-full py-3 pl-10 pr-28 text-sm rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 hover:!border-orange-500  focus:ring-orange-500 focus:border-orange-500"
           style={{
             background: "var(--card-bg)",
             border: "1px solid var(--card-border)",
