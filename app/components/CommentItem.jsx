@@ -2,89 +2,113 @@
 
 import { useState } from "react";
 import { getAuth } from "firebase/auth";
+
 import {
   HandThumbUpIcon,
   HandThumbDownIcon,
 } from "@heroicons/react/24/outline";
+
 import {
   HandThumbUpIcon as HandThumbUpSolid,
   HandThumbDownIcon as HandThumbDownSolid,
 } from "@heroicons/react/24/solid";
 
 function formatTimeAgo(iso) {
-  if (!iso) return "";
   const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const minutes = Math.floor(diffMs / (1000 * 60));
 
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
 
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
 
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
 }
 
 export default function CommentItem({
   comment,
   postId,
-  currentUser,
   refreshComments,
 }) {
-  const [liked, setLiked] = useState(comment.userReaction === "like");
-  const [disliked, setDisliked] = useState(comment.userReaction === "dislike");
-  const [likes, setLikes] = useState(comment.likesCount || 0);
-  const [dislikes, setDislikes] = useState(comment.dislikesCount || 0);
+
+  const [likes, setLikes] = useState(comment.likes || 0);
+  const [dislikes, setDislikes] = useState(comment.dislikes || 0);
+
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
 
   async function react(type) {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) return;
 
-    const token = await user.getIdToken();
+    try {
 
-    const res = await fetch(`/api/news/${postId}/comments/${comment.id}/react`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ type }),
-    });
+      const auth = getAuth();
+      const user = auth.currentUser;
 
-    const data = await res.json();
-    if (!data.ok) return;
+      if (!user) {
+        alert("Login to react");
+        return;
+      }
 
-    setLikes(data.likesCount);
-    setDislikes(data.dislikesCount);
-    setLiked(data.userReaction === "like");
-    setDisliked(data.userReaction === "dislike");
+      const token = await user.getIdToken();
+
+      const res = await fetch(
+        `/api/news/${postId}/comments/${comment.id}/react`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ type }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Reaction failed");
+      }
+
+      setLikes(data.likesCount);
+      setDislikes(data.dislikesCount);
+
+      if (type === "like") {
+        setLiked(!liked);
+        setDisliked(false);
+      } else {
+        setDisliked(!disliked);
+        setLiked(false);
+      }
+
+    } catch (err) {
+      console.error("Comment reaction error:", err);
+    }
+
   }
 
   return (
-    <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--badge-bg)]/40">
+    <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--badge-bg)]/40">
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-2">
-
-        <span className="text-sm font-semibold text-orange-400">
-          {comment.userName || "Anonymous"}
-        </span>
-
-        <span className="text-xs opacity-60">
-          {formatTimeAgo(comment.createdAt)}
-        </span>
-
-      </div>
-
-      {/* COMMENT MESSAGE */}
-      <p className="text-sm md:text-base leading-relaxed text-[var(--text-title)] mb-3">
+      {/* COMMENT TEXT */}
+      <p className="text-base md:text-lg font-medium text-[var(--text-title)] mb-3">
         {comment.text}
       </p>
 
+      {/* USER + TIME */}
+      <div className="flex items-center justify-between text-xs opacity-70 mb-3">
+
+        <span className="font-semibold text-orange-400">
+          {comment.userName || "Anonymous"}
+        </span>
+
+        <span>{formatTimeAgo(comment.createdAt)}</span>
+
+      </div>
+
       {/* ACTION BAR */}
-      <div className="flex items-center gap-5 text-xs opacity-90">
+      <div className="flex items-center gap-6 text-sm">
 
         {/* LIKE */}
         <button
@@ -92,9 +116,9 @@ export default function CommentItem({
           className="flex items-center gap-1 hover:text-orange-400 transition"
         >
           {liked ? (
-            <HandThumbUpSolid className="w-4 h-4 text-orange-400" />
+            <HandThumbUpSolid className="w-5 h-5 text-orange-400" />
           ) : (
-            <HandThumbUpIcon className="w-4 h-4" />
+            <HandThumbUpIcon className="w-5 h-5" />
           )}
           {likes}
         </button>
@@ -105,22 +129,153 @@ export default function CommentItem({
           className="flex items-center gap-1 hover:text-orange-400 transition"
         >
           {disliked ? (
-            <HandThumbDownSolid className="w-4 h-4 text-orange-400" />
+            <HandThumbDownSolid className="w-5 h-5 text-orange-400" />
           ) : (
-            <HandThumbDownIcon className="w-4 h-4" />
+            <HandThumbDownIcon className="w-5 h-5" />
           )}
           {dislikes}
         </button>
 
-        {/* REPLY */}
         <button className="hover:text-orange-400 transition">
           Reply
         </button>
 
       </div>
+
     </div>
   );
 }
+
+
+
+
+
+
+
+
+// "use client";
+
+// import { useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import {
+//   HandThumbUpIcon,
+//   HandThumbDownIcon,
+// } from "@heroicons/react/24/outline";
+// import {
+//   HandThumbUpIcon as HandThumbUpSolid,
+//   HandThumbDownIcon as HandThumbDownSolid,
+// } from "@heroicons/react/24/solid";
+
+// function formatTimeAgo(iso) {
+//   if (!iso) return "";
+//   const diffMs = Date.now() - new Date(iso).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+
+//   const diffDays = Math.floor(diffHours / 24);
+//   return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+// }
+
+// export default function CommentItem({
+//   comment,
+//   postId,
+//   currentUser,
+//   refreshComments,
+// }) {
+//   const [liked, setLiked] = useState(comment.userReaction === "like");
+//   const [disliked, setDisliked] = useState(comment.userReaction === "dislike");
+//   const [likes, setLikes] = useState(comment.likesCount || 0);
+//   const [dislikes, setDislikes] = useState(comment.dislikesCount || 0);
+
+//   async function react(type) {
+//     const auth = getAuth();
+//     const user = auth.currentUser;
+//     if (!user) return;
+
+//     const token = await user.getIdToken();
+
+//     const res = await fetch(`/api/news/${postId}/comments/${comment.id}/react`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify({ type }),
+//     });
+
+//     const data = await res.json();
+//     if (!data.ok) return;
+
+//     setLikes(data.likesCount);
+//     setDislikes(data.dislikesCount);
+//     setLiked(data.userReaction === "like");
+//     setDisliked(data.userReaction === "dislike");
+//   }
+
+//   return (
+//     <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--badge-bg)]/40">
+
+//       {/* HEADER */}
+//       <div className="flex items-center justify-between mb-2">
+
+//         <span className="text-sm font-semibold text-orange-400">
+//           {comment.userName || "Anonymous"}
+//         </span>
+
+//         <span className="text-xs opacity-60">
+//           {formatTimeAgo(comment.createdAt)}
+//         </span>
+
+//       </div>
+
+//       {/* COMMENT MESSAGE */}
+//       <p className="text-sm md:text-base leading-relaxed text-[var(--text-title)] mb-3">
+//         {comment.text}
+//       </p>
+
+//       {/* ACTION BAR */}
+//       <div className="flex items-center gap-5 text-xs opacity-90">
+
+//         {/* LIKE */}
+//         <button
+//           onClick={() => react("like")}
+//           className="flex items-center gap-1 hover:text-orange-400 transition"
+//         >
+//           {liked ? (
+//             <HandThumbUpSolid className="w-4 h-4 text-orange-400" />
+//           ) : (
+//             <HandThumbUpIcon className="w-4 h-4" />
+//           )}
+//           {likes}
+//         </button>
+
+//         {/* DISLIKE */}
+//         <button
+//           onClick={() => react("dislike")}
+//           className="flex items-center gap-1 hover:text-orange-400 transition"
+//         >
+//           {disliked ? (
+//             <HandThumbDownSolid className="w-4 h-4 text-orange-400" />
+//           ) : (
+//             <HandThumbDownIcon className="w-4 h-4" />
+//           )}
+//           {dislikes}
+//         </button>
+
+//         {/* REPLY */}
+//         <button className="hover:text-orange-400 transition">
+//           Reply
+//         </button>
+
+//       </div>
+//     </div>
+//   );
+// }
 
 
 

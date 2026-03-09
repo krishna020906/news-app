@@ -1,4 +1,402 @@
-// app/profile/page.jsx
+// //app/profile/page.jsx
+
+
+// "use client";
+
+// import { useEffect, useState, useRef } from "react";
+// import { useRouter } from "next/navigation";
+// import { getAuth } from "firebase/auth";
+// import "@/backend/firebase/config";
+
+
+// function formatTimeAgo(iso) {
+//   if (!iso) return "";
+//   const diffMs = Date.now() - new Date(iso).getTime();
+//   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+//   if (diffMinutes < 1) return "Just now";
+//   if (diffMinutes < 60) return `${diffMinutes} min ago`;
+//   const diffHours = Math.floor(diffMinutes / 60);
+//   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+//   const diffDays = Math.floor(diffHours / 24);
+//   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+//   return new Date(iso).toLocaleDateString();
+// }
+
+// export default function NewsDetailPage() {
+
+ 
+
+//   /* ================================
+//      LOAD POST
+//   ================================ */
+
+//   useEffect(() => {
+//     if (!id) return;
+
+//     async function loadPost() {
+//       try {
+//         setLoadingPost(true);
+//         setPostError("");
+
+//         const res = await fetch(`/api/news/${id}`);
+//         const data = await res.json();
+
+//         if (!res.ok || !data.ok) {
+//           throw new Error(data.error || "Failed to load post");
+//         }
+
+//         setPost(data.post);
+
+//       } catch (err) {
+//         console.error(err);
+//         setPostError(err.message || "Failed to load post");
+//       } finally {
+//         setLoadingPost(false);
+//       }
+//     }
+
+//     loadPost();
+
+//   }, [id]);
+
+
+//   /* ================================
+//      LOAD COMMENTS (WITH SORT)
+//   ================================ */
+
+//   async function loadComments() {
+
+//     try {
+
+//       setLoadingComments(true);
+//       setCommentsError("");
+
+//       const res = await fetch(`/api/news/${id}/comments?sort=${sort}`);
+
+//       const data = await res.json();
+
+//       if (!res.ok || !data.ok) {
+//         throw new Error(data.error || "Failed to load comments");
+//       }
+
+//       setComments(data.comments || []);
+
+//     } catch (err) {
+
+//       console.error(err);
+//       setCommentsError(err.message || "Failed to load comments");
+
+//     } finally {
+
+//       setLoadingComments(false);
+
+//     }
+
+//   }
+
+//   useEffect(() => {
+
+//     if (!id) return;
+
+//     loadComments();
+
+//   }, [id, sort]);
+
+
+//   /* ================================
+//      READING PROGRESS BAR
+//   ================================ */
+
+//   useEffect(() => {
+
+//     function handleScroll() {
+
+//       if (!articleRef.current) return;
+
+//       const article = articleRef.current;
+
+//       const articleTop =
+//         article.getBoundingClientRect().top + window.scrollY;
+
+//       const articleHeight = article.offsetHeight;
+
+//       const windowHeight = window.innerHeight;
+
+//       const scrollY = window.scrollY;
+
+//       const scrolled = scrollY - articleTop;
+
+//       const readableHeight = articleHeight - windowHeight;
+
+//       if (scrolled <= 0) {
+//         setReadingProgress(0);
+//         return;
+//       }
+
+//       if (scrolled >= readableHeight) {
+//         setReadingProgress(100);
+//         return;
+//       }
+
+//       const progress = (scrolled / readableHeight) * 100;
+
+//       setReadingProgress(progress);
+
+//     }
+
+//     window.addEventListener("scroll", handleScroll);
+
+//     handleScroll();
+
+//     return () => window.removeEventListener("scroll", handleScroll);
+
+//   }, []);
+
+
+//   /* ================================
+//      REACT TO POST
+//   ================================ */
+
+//   async function handleReact(type) {
+
+//     if (!post) return;
+
+//     try {
+
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+
+//       if (!user) return;
+
+//       const idToken = await user.getIdToken();
+
+//       const res = await fetch(`/api/news/${post.id}/reaction`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${idToken}`,
+//         },
+//         body: JSON.stringify({ type }),
+//       });
+
+//       const data = await res.json();
+
+//       if (!res.ok || !data.ok) {
+//         throw new Error(data.error || "Failed to react");
+//       }
+
+//       setPost((prev) =>
+//         prev
+//           ? {
+//               ...prev,
+//               likesCount: data.post.likesCount,
+//               dislikesCount: data.post.dislikesCount,
+//             }
+//           : prev
+//       );
+
+//     } catch (err) {
+
+//       console.error(err);
+
+//     }
+
+//   }
+
+
+//   /* ================================
+//      POST COMMENT
+//   ================================ */
+
+//   async function handleSubmitComment(e) {
+
+//     e.preventDefault();
+
+//     if (!newComment.trim() || !post) return;
+
+//     try {
+
+//       setPostingComment(true);
+
+//       const auth = getAuth();
+//       const user = auth.currentUser;
+
+//       if (!user) return;
+
+//       const idToken = await user.getIdToken();
+
+//       const res = await fetch(`/api/news/${post.id}/comments`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${idToken}`,
+//         },
+//         body: JSON.stringify({ text: newComment }),
+//       });
+
+//       const data = await res.json();
+
+//       if (!res.ok || !data.ok) {
+//         throw new Error(data.error || "Failed to post comment");
+//       }
+
+//       setNewComment("");
+
+//       loadComments();
+
+//       setPost((prev) =>
+//         prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev
+//       );
+
+//     } catch (err) {
+
+//       console.error(err);
+
+//     } finally {
+
+//       setPostingComment(false);
+
+//     }
+
+//   }
+
+
+//   if (loadingPost) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         Loading...
+//       </div>
+//     );
+//   }
+
+
+//   if (!post) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         Post not found
+//       </div>
+//     );
+//   }
+
+//   const createdLabel = formatTimeAgo(post.createdAt);
+
+
+//   return (
+//     <div className="min-h-screen bg-[var(--bg)] text-[var(--text-title)]">
+
+//       <div className="max-w-5xl mx-auto px-4 py-6">
+
+//         <article ref={articleRef}>
+
+//           <h1 className="text-2xl font-semibold mb-4">
+//             {post.title}
+//           </h1>
+
+//           <p className="text-sm opacity-70 mb-6">
+//             {createdLabel}
+//           </p>
+
+
+//           {/* ============================
+//               COMMENTS
+//           ============================ */}
+
+//           <section className="space-y-4 mt-10">
+
+//             <div className="flex items-center justify-between">
+
+//               <h2 className="text-lg font-semibold">
+//                 Comments
+//               </h2>
+
+//               {/* FILTER */}
+//               <select
+//                 value={sort}
+//                 onChange={(e) => setSort(e.target.value)}
+//                 className="border rounded-md px-3 py-1 text-sm bg-transparent"
+//               >
+//                 <option value="top">Top comments</option>
+//                 <option value="new">Newest first</option>
+//               </select>
+
+//             </div>
+
+
+//             {/* COMMENT BOX */}
+
+//             <form onSubmit={handleSubmitComment}>
+
+//               <textarea
+//                 value={newComment}
+//                 onChange={(e) => setNewComment(e.target.value)}
+//                 placeholder="Share your thoughts..."
+//                 className="w-full p-3 rounded-xl border bg-transparent"
+//               />
+
+//               <div className="flex justify-end mt-2">
+
+//                 <button
+//                   type="submit"
+//                   disabled={postingComment}
+//                   className="px-4 py-2 rounded-full bg-orange-500 text-white text-sm"
+//                 >
+//                   {postingComment ? "Posting..." : "Post comment"}
+//                 </button>
+
+//               </div>
+
+//             </form>
+
+
+//             {/* COMMENTS LIST */}
+
+//             {loadingComments ? (
+
+//               <p>Loading comments...</p>
+
+//             ) : comments.length === 0 ? (
+
+//               <p>No comments yet</p>
+
+//             ) : (
+
+//               <div className="space-y-4">
+
+//                 {comments.map((c) => (
+
+//                   <CommentItem
+//                     key={c.id}
+//                     comment={c}
+//                     postId={post.id}
+//                     currentUser={getAuth().currentUser?.uid}
+//                     refreshComments={loadComments}
+//                   />
+
+//                 ))}
+
+//               </div>
+
+//             )}
+
+//           </section>
+
+//         </article>
+
+//       </div>
+
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useEffect, useState } from "react";

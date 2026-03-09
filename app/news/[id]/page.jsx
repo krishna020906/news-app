@@ -40,6 +40,7 @@ export default function NewsDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id;
+  const [sort, setSort] = useState("top");
 
   const [post, setPost] = useState(null);
   const [loadingPost, setLoadingPost] = useState(true);
@@ -64,44 +65,50 @@ export default function NewsDetailPage() {
     if (!id) return;
     let cancelled = false;
 
-    async function loadPost() {
-      try {
-        setLoadingPost(true);
-        setPostError("");
-        const res = await fetch(`/api/news/${id}`);
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Failed to load post");
-        }
-        if (!cancelled) setPost(data.post);
-      } catch (err) {
-        console.error(err);
-        if (!cancelled) setPostError(err.message || "Failed to load post");
-      } finally {
-        if (!cancelled) setLoadingPost(false);
+   async function loadPost() {
+    try {
+      setLoadingPost(true);
+      setPostError("");
+
+      const res = await fetch(`/api/news/${id}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to load post");
       }
+
+      if (!cancelled) setPost(data.post);
+
+    } catch (err) {
+      console.error(err);
+      if (!cancelled) setPostError(err.message || "Failed to load post");
+    } finally {
+      if (!cancelled) setLoadingPost(false);
     }
+  }
   // const sections = parseSections(post.content);
 
 
-    async function loadComments() {
-      try {
-        setLoadingComments(true);
-        setCommentsError("");
-        const res = await fetch(`/api/news/${id}/comments`);
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Failed to load comments");
-        }
-        if (!cancelled) setComments(data.comments || []);
-      } catch (err) {
-        console.error(err);
-        if (!cancelled)
-          setCommentsError(err.message || "Failed to load comments");
-      } finally {
-        if (!cancelled) setLoadingComments(false);
-      }
+  async function loadComments() {
+  try {
+    setLoadingComments(true);
+    setCommentsError("");
+
+    const res = await fetch(`/api/news/${id}/comments?sort=${sort}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Failed to load comments");
     }
+
+    setComments(data.comments || []);
+  } catch (err) {
+    console.error(err);
+    setCommentsError(err.message || "Failed to load comments");
+  } finally {
+    setLoadingComments(false);
+  }
+}
 
     loadPost();
     loadComments();
@@ -109,7 +116,7 @@ export default function NewsDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id , sort]);
   useEffect(() => {
     function handleScroll() {
       if (!articleRef.current) return;
@@ -541,11 +548,22 @@ export default function NewsDetailPage() {
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="card-title text-lg font-semibold">
-                  Comments
+                  Comments ({post.commentsCount || comments.length || 0})
                 </h2>
-                <span className="text-xs card-body opacity-70">
-                  {post.commentsCount || comments.length || 0} comments
-                </span>
+
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="px-3 py-1 rounded-md text-sm
+                  border border-[var(--card-border)]
+                  bg-[var(--badge-bg)]
+                  text-[var(--text-title)]
+                  cursor-pointer"
+                >
+                  <option value="top">🔥 Top</option>
+                  <option value="new">🕒 Newest</option>
+                </select>
+
               </div>
 
               {/* Comment form */}
