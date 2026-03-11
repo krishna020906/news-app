@@ -6,18 +6,40 @@ import { useParams, useRouter } from "next/navigation";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
 import CommentItem from "../../components/CommentItem";
+import Link from 'next/link';
+import FollowButton from "../../components/FollowButton";
+
+import {
+  HandThumbUpIcon as LikeOutline,
+  HandThumbDownIcon as DislikeOutline,
+} from "@heroicons/react/24/outline";
+
+import {
+  HandThumbUpIcon as LikeSolid,
+  HandThumbDownIcon as DislikeSolid,
+} from "@heroicons/react/24/solid";
+
 
 function formatTimeAgo(iso) {
   if (!iso) return "";
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  return new Date(iso).toLocaleDateString();
+
+  const diff = Date.now() - new Date(iso).getTime();
+
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+
+  const years = Math.floor(months / 12);
+  return `${years}y ago`;
 }
 
 
@@ -49,6 +71,8 @@ export default function NewsDetailPage() {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentsError, setCommentsError] = useState("");
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
 
   // Reading progress (0 - 100)
   const [readingProgress, setReadingProgress] = useState(0);
@@ -192,6 +216,13 @@ export default function NewsDetailPage() {
             }
           : prev
       );
+      if (type === "like") {
+        setLiked((v) => !v);
+        setDisliked(false);
+      } else {
+        setDisliked((v) => !v);
+        setLiked(false);
+      }
     } catch (err) {
       console.error("Detail react error:", err);
     }
@@ -354,12 +385,17 @@ export default function NewsDetailPage() {
             )}
 
             {/* Meta row */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs md:text-sm card-body">
+            {/* <div className="flex flex-wrap items-center justify-between gap-3 text-xs md:text-sm card-body">
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 <div className="px-3 py-1 rounded-full bg-[var(--badge-bg)] text-[11px] md:text-xs">
                   by{" "}
                   <span className="font-semibold">
-                    {post.authorName || post.authorEmail || "Anonymous"}
+                    <Link
+                      href={`/creator/${post.authorUid}`}
+                      className="hover:text-orange-400 transition"
+                    >
+                      {post.authorName || post.authorEmail || "Anonymous"}
+                    </Link>
                   </span>
                 </div>
 
@@ -386,7 +422,7 @@ export default function NewsDetailPage() {
                   👎 <span>{post.dislikesCount ?? 0}</span>
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Content */}
             {/* 🧩 Structured News Content */}
@@ -541,6 +577,67 @@ export default function NewsDetailPage() {
             )}
 
 
+            
+
+            {/* Creator + Engagement Section */}
+
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-4 border-t border-[var(--card-border)]">
+
+              {/* Creator */}
+              <div className="flex items-center gap-3">
+
+                <div className="text-sm">
+                  <Link
+                    href={`/creator/${post.authorUid}`}
+                    className="font-semibold hover:text-orange-400 transition"
+                  >
+                    {post.authorName || "Anonymous"}
+                  </Link>
+
+                  <div className="text-xs opacity-70">
+                    {formatTimeAgo(post.createdAt)}
+                  </div>
+                </div>
+
+                <FollowButton
+                  authorUid={post.authorUid}
+                  initialIsFollowing={post.isFollowingAuthor}
+                  initialFollowersCount={post.authorFollowersCount}
+                />
+
+              </div>
+
+              {/* Reaction Buttons */}
+
+              <div className="flex items-center gap-6 text-sm">
+
+                <button
+                  onClick={() => handleReact("like")}
+                  className="flex items-center gap-1"
+                >
+                  {liked ? (
+                    <LikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+                  ) : (
+                    <LikeOutline className="w-5 h-5 opacity-70" />
+                  )}
+                  {post.likesCount ?? 0}
+                </button>
+
+                <button
+                  onClick={() => handleReact("dislike")}
+                  className="flex items-center gap-1"
+                >
+                  {disliked ? (
+                    <DislikeSolid className="w-5 h-5 text-[var(--button-bg)]" />
+                  ) : (
+                    <DislikeOutline className="w-5 h-5 opacity-70" />
+                  )}
+                  {post.dislikesCount ?? 0}
+                </button>
+
+              </div>
+
+            </div>
             {/* Divider */}
             <div className="my-6 h-px w-full bg-[var(--card-border)]" />
 
