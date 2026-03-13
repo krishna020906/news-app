@@ -1,3 +1,4 @@
+// // app/api/news/route.ts
 // app/api/news/route.ts
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/backend/lib/db";
@@ -10,18 +11,36 @@ export async function GET(req: Request) {
   try {
     await connectToDatabase();
 
+    const { searchParams } = new URL(req.url);
+    const cursor = searchParams.get("cursor");
+    const limit = Number(searchParams.get("limit") || 10);
+
     let currentUser: any = null;
     try {
       const { decoded } = await requireAuth(req);
       currentUser = await User.findOne({ uid: decoded.uid }).lean();
     } catch {}
 
-    const posts = await News.find({ status: "published" })
+    const query: any = { status: "published" };
+
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    const posts = await News.find(query)
       .sort({ createdAt: -1 })
-      .limit(20)
+      .limit(limit + 1)
       .lean();
 
+    let nextCursor: string | null = null;
+
+    if (posts.length > limit) {
+      const nextItem: any = posts.pop();
+      nextCursor = nextItem.createdAt.toISOString();
+    }
+
     const authorUids = [...new Set(posts.map((p: any) => p.authorUid))];
+
     const authors = await User.find({ uid: { $in: authorUids } })
       .select("uid followers")
       .lean();
@@ -34,8 +53,6 @@ export async function GET(req: Request) {
       return {
         id: p._id.toString(),
         title: p.title,
-
-        // 👇 structured sections
         sections: p.sections,
 
         sourceUrl: p.sourceUrl || "",
@@ -51,6 +68,7 @@ export async function GET(req: Request) {
         isFollowingAuthor: currentUser
           ? currentUser.followingCreators?.includes(p.authorUid)
           : false,
+
         authorFollowersCount: author?.followers?.length || 0,
 
         createdAt: p.createdAt?.toISOString() || "",
@@ -60,9 +78,15 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ ok: true, posts: serialised });
+    return NextResponse.json({
+      ok: true,
+      posts: serialised,
+      nextCursor,
+    });
+
   } catch (err) {
     console.error("GET /api/news error:", err);
+
     return NextResponse.json(
       { ok: false, error: "Failed to load posts" },
       { status: 500 }
@@ -87,7 +111,6 @@ export async function POST(req: Request) {
       sections,
     } = body;
 
-    // 🔒 STRICT validation for structured content
     if (
       !title ||
       !sourceUrl ||
@@ -111,10 +134,7 @@ export async function POST(req: Request) {
       category,
       tags,
       affectedState,
-
-      // 👇 store structured content
       sections,
-
       authorUid: decoded.uid,
       authorEmail: decoded.email,
       authorName: user?.name || "",
@@ -125,14 +145,158 @@ export async function POST(req: Request) {
       ok: true,
       postId: post._id.toString(),
     });
+
   } catch (err) {
     console.error("POST /api/news error:", err);
+
     return NextResponse.json(
       { ok: false, error: "Failed to create post" },
       { status: 500 }
     );
   }
 }
+
+
+
+
+
+
+
+
+// import { NextResponse , NextRequest } from "next/server";
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import User from "@/backend/models/User";
+
+// /* ===================== GET ===================== */
+// export async function GET(req: Request) {
+//   try {
+//     await connectToDatabase();
+
+//     let currentUser: any = null;
+//     try {
+//       const { decoded } = await requireAuth(req);
+//       currentUser = await User.findOne({ uid: decoded.uid }).lean();
+//     } catch {}
+
+//     const posts = await News.find({ status: "published" })
+//       .sort({ createdAt: -1 })
+//       .limit(20)
+//       .lean();
+
+//     const authorUids = [...new Set(posts.map((p: any) => p.authorUid))];
+//     const authors = await User.find({ uid: { $in: authorUids } })
+//       .select("uid followers")
+//       .lean();
+
+//     const authorMap = new Map(authors.map((a: any) => [a.uid, a]));
+
+//     const serialised = posts.map((p: any) => {
+//       const author = authorMap.get(p.authorUid);
+
+//       return {
+//         id: p._id.toString(),
+//         title: p.title,
+
+//         // 👇 structured sections
+//         sections: p.sections,
+
+//         sourceUrl: p.sourceUrl || "",
+//         mediaUrl: p.mediaUrl || "",
+//         mediaType: p.mediaType || "none",
+//         category: p.category || "general",
+//         tags: Array.isArray(p.tags) ? p.tags : [],
+
+//         authorUid: p.authorUid,
+//         authorName: p.authorName || "",
+//         authorEmail: p.authorEmail || "",
+
+//         isFollowingAuthor: currentUser
+//           ? currentUser.followingCreators?.includes(p.authorUid)
+//           : false,
+//         authorFollowersCount: author?.followers?.length || 0,
+
+//         createdAt: p.createdAt?.toISOString() || "",
+//         likesCount: p.likesCount || 0,
+//         dislikesCount: p.dislikesCount || 0,
+//         commentsCount: p.commentsCount || 0,
+//       };
+//     });
+
+//     return NextResponse.json({ ok: true, posts: serialised });
+//   } catch (err) {
+//     console.error("GET /api/news error:", err);
+//     return NextResponse.json(
+//       { ok: false, error: "Failed to load posts" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// /* ===================== POST ===================== */
+// export async function POST(req: Request) {
+//   try {
+//     const { decoded, user } = await requireAuth(req);
+//     await connectToDatabase();
+
+//     const body = await req.json();
+//     const {
+//       title,
+//       sourceUrl,
+//       mediaUrl,
+//       category,
+//       tags,
+//       affectedState,
+//       sections,
+//     } = body;
+
+//     // 🔒 STRICT validation for structured content
+//     if (
+//       !title ||
+//       !sourceUrl ||
+//       !mediaUrl ||
+//       !sections?.whatHappened ||
+//       !sections?.whyItMatters ||
+//       !sections?.analysis ||
+//       !sections?.perspective
+//     ) {
+//       return NextResponse.json(
+//         { ok: false, error: "Missing required fields" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const post = await News.create({
+//       title,
+//       sourceUrl,
+//       mediaUrl,
+//       mediaType: mediaUrl.includes("video") ? "video" : "image",
+//       category,
+//       tags,
+//       affectedState,
+
+//       // 👇 store structured content
+//       sections,
+
+//       authorUid: decoded.uid,
+//       authorEmail: decoded.email,
+//       authorName: user?.name || "",
+//       status: "published",
+//     });
+
+//     return NextResponse.json({
+//       ok: true,
+//       postId: post._id.toString(),
+//     });
+//   } catch (err) {
+//     console.error("POST /api/news error:", err);
+//     return NextResponse.json(
+//       { ok: false, error: "Failed to create post" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

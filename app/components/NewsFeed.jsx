@@ -1,64 +1,42 @@
 
-// /api/components/newsfeed.jsx
+// // /api/components/newsfeed.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAuth } from "firebase/auth";
 import "@/backend/firebase/config";
 import ArticleCard from "./ArticleCard";
 
 function ArticleSkeleton() {
-  
-
   return (
     <div className="card p-4 animate-[pulse_2s_ease-in-out_infinite]">
-      {/* Image placeholder */}
       <div className="h-40 w-full bg-gray-700 rounded mb-4" />
-
-      {/* Title */}
       <div className="h-4 bg-gray-600 rounded w-3/4 mb-2" />
-
-      {/* Description lines */}
       <div className="space-y-2">
         <div className="h-3 bg-gray-600 rounded w-full" />
         <div className="h-3 bg-gray-600 rounded w-5/6" />
         <div className="h-3 bg-gray-600 rounded w-2/3" />
       </div>
-
-      {/* Footer */}
-      <div className="mt-4 flex justify-between items-center">
-        <div className="flex gap-3">
-          <div className="h-4 w-8 bg-gray-600 rounded" />
-          <div className="h-4 w-8 bg-gray-600 rounded" />
-          <div className="h-4 w-8 bg-gray-600 rounded" />
-        </div>
-
-        <div className="h-6 w-16 bg-gray-600 rounded" />
-      </div>
     </div>
   );
 }
 
-
-
-
 export default function NewsFeed({ onOpen, query, category, mode }) {
-  console.log("[NEWSFEED] component rendered with query:", query);
 
   const [articles, setArticles] = useState([]);
+  const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [hasMore, setHasMore] = useState(true);
+
   const [authChecking, setAuthChecking] = useState(true);
   const [user, setUser] = useState(null);
-  console.log("🔥 NewsFeed rendered with articles:", articles.length);
 
-  /* 🔐 AUTH — ONCE */
+  const loaderRef = useRef(null);
+
+  /* AUTH */
   useEffect(() => {
-    console.log("[AUTH] subscribing");
-
     const auth = getAuth();
     const unsub = auth.onAuthStateChanged((u) => {
-      console.log("[AUTH] resolved", !!u);
       setUser(u);
       setAuthChecking(false);
     });
@@ -66,155 +44,338 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
     return () => unsub();
   }, []);
 
-  /* 📰 FETCH — AFTER AUTH */
-  useEffect(() => {
-    if (authChecking) {
-      console.log("[FETCH] waiting for auth");
-      return;
-    }
-    console.log("[NEWSFEED] useEffect fired");
-    console.log("[NEWSFEED] query used for fetch:", query); // ✅ HERE
+  /* LOAD POSTS */
+  async function loadPosts() {
 
-    console.log("[FETCH] start");
-    let cancelled = false;
-    console.log("[NEWSFEED] fetching with query:", query);
+    if (loading || !hasMore) return;
 
+    setLoading(true);
 
-    async function load() {
-      try {
-        setLoading(true);
-        setError("");
-        let url = "/api/news";
-        let options = {};
+    try {
 
-        // 🔴 SEARCH HAS ABSOLUTE PRIORITY
-        if (query && query.trim().length > 0) {
-          console.log("[NEWSFEED] SEARCH MODE ACTIVE");
-          url = `/api/search?q=${encodeURIComponent(query)}`;
-        }
-        // 🟣 FOLLOWING
-        else if (mode === "following" && user) {
-          const token = await user.getIdToken();
-          url = "/api/news/following";
-          options.headers = {
-            Authorization: `Bearer ${token}`,
-          };
-        }
+      let url = `/api/news?limit=10`;
 
-        // 🟢 FOR-YOU ONLY WHEN NOT SEARCHING
-        else if (mode === "for-you" && user) {
-          console.log("[NEWSFEED] FOR-YOU MODE");
-          const token = await user.getIdToken();
-          url = "/api/news/for-you";
-          options.headers = {
-            Authorization: `Bearer ${token}`,
-          };
-        }
-
-        // 🟡 ELSE = NORMAL FEED (/api/news)
-
-
-        // let url = "/api/news";
-        // let options = {};
-        
-        // // 🔍 SEARCH HAS HIGHEST PRIORITY
-        // if (query && query.trim().length > 0) {
-        //   console.log("[NEWSFEED] SEARCH API HIT with:", query); // ✅ HERE
-        //   url = `/api/search?q=${encodeURIComponent(query)}`;
-        // }
-        // // 🎯 For-you only when NOT searching
-        // else if (mode === "for-you" && user) {
-        //   const token = await user.getIdToken();
-        //   url = "/api/news/for-you";
-        //   options.headers = {
-        //     Authorization: `Bearer ${token}`,
-        //   };
-        // }
-
-
-        // if (mode === "for-you" && user) {
-        //   const token = await user.getIdToken();
-        //   url = "/api/news/for-you";
-        //   options.headers = {
-        //     Authorization: `Bearer ${token}`,
-        //   };
-        // }
-
-        const res = await fetch(url, options);
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Failed to load news");
-        }
-
-        if (!cancelled) {
-          // setArticles(data.posts || []);
-          const items = data.posts ?? data.results ?? [];
-          setArticles(items);
-          console.log("[NEWSFEED] first article keys:", Object.keys(items[0] || {}));
-          console.log("[NEWSFEED] first article:", items[0]);
-
-        }
-       
-
-
-      } catch (e) {
-        if (!cancelled) setError(e.message);
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (cursor) {
+        url += `&cursor=${cursor}`;
       }
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error("Failed to load news");
+      }
+
+      const items = data.posts ?? [];
+
+      setArticles((prev) => [...prev, ...items]);
+
+      if (!data.nextCursor) {
+        setHasMore(false);
+      } else {
+        setCursor(data.nextCursor);
+      }
+
+    } catch (err) {
+      console.error(err);
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [authChecking, mode, user, query]);
-
-  /* 🧱 UI STATES */
-if (authChecking || (loading && articles.length === 0)) {
-  return (
-    <div className="space-y-4">
-      <ArticleSkeleton />
-      <ArticleSkeleton />
-      <ArticleSkeleton />
-    </div>
-  );
-}
-
-
-  if (error) {
-    return <div className="card p-4 text-red-400">{error}</div>;
+    setLoading(false);
   }
-  if (!loading && query && articles.length === 0) {
+
+  /* INITIAL LOAD */
+  useEffect(() => {
+    if (authChecking) return;
+
+    setArticles([]);
+    setCursor(null);
+    setHasMore(true);
+
+    loadPosts();
+
+  }, [authChecking, mode, query]);
+
+  /* INFINITE SCROLL */
+  useEffect(() => {
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadPosts();
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+
+  }, [cursor, hasMore]);
+
+  /* UI */
+
+  if (authChecking && articles.length === 0) {
     return (
-      <div className="card p-6 text-center opacity-70">
-        No results found for <b>{query}</b>
+      <div className="space-y-4">
+        <ArticleSkeleton />
+        <ArticleSkeleton />
+        <ArticleSkeleton />
       </div>
     );
   }
 
-
   return (
     <div className="space-y-4">
-      {query && (
-        <div className="text-sm opacity-70">
-          Showing results for{" "}
-          <span className="font-semibold">“{query}”</span>
-        </div>
-      )}
 
       {articles.map((a) => (
         <ArticleCard
-          key={a._id || a.id}
+          key={a.id}
           article={a}
           onOpen={onOpen}
         />
       ))}
+
+      <div ref={loaderRef} className="py-6 text-center opacity-70">
+        {loading && "Loading more news..."}
+        {!hasMore && "No more news"}
+      </div>
+
     </div>
   );
-
 }
+
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import { getAuth } from "firebase/auth";
+// import "@/backend/firebase/config";
+// import ArticleCard from "./ArticleCard";
+
+// function ArticleSkeleton() {
+  
+
+//   return (
+//     <div className="card p-4 animate-[pulse_2s_ease-in-out_infinite]">
+//       {/* Image placeholder */}
+//       <div className="h-40 w-full bg-gray-700 rounded mb-4" />
+
+//       {/* Title */}
+//       <div className="h-4 bg-gray-600 rounded w-3/4 mb-2" />
+
+//       {/* Description lines */}
+//       <div className="space-y-2">
+//         <div className="h-3 bg-gray-600 rounded w-full" />
+//         <div className="h-3 bg-gray-600 rounded w-5/6" />
+//         <div className="h-3 bg-gray-600 rounded w-2/3" />
+//       </div>
+
+//       {/* Footer */}
+//       <div className="mt-4 flex justify-between items-center">
+//         <div className="flex gap-3">
+//           <div className="h-4 w-8 bg-gray-600 rounded" />
+//           <div className="h-4 w-8 bg-gray-600 rounded" />
+//           <div className="h-4 w-8 bg-gray-600 rounded" />
+//         </div>
+
+//         <div className="h-6 w-16 bg-gray-600 rounded" />
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+// export default function NewsFeed({ onOpen, query, category, mode }) {
+//   console.log("[NEWSFEED] component rendered with query:", query);
+
+//   const [articles, setArticles] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState("");
+//   const [authChecking, setAuthChecking] = useState(true);
+//   const [user, setUser] = useState(null);
+//   console.log("🔥 NewsFeed rendered with articles:", articles.length);
+
+//   /* 🔐 AUTH — ONCE */
+//   useEffect(() => {
+//     console.log("[AUTH] subscribing");
+
+//     const auth = getAuth();
+//     const unsub = auth.onAuthStateChanged((u) => {
+//       console.log("[AUTH] resolved", !!u);
+//       setUser(u);
+//       setAuthChecking(false);
+//     });
+
+//     return () => unsub();
+//   }, []);
+
+//   /* 📰 FETCH — AFTER AUTH */
+//   useEffect(() => {
+//     if (authChecking) {
+//       console.log("[FETCH] waiting for auth");
+//       return;
+//     }
+//     console.log("[NEWSFEED] useEffect fired");
+//     console.log("[NEWSFEED] query used for fetch:", query); // ✅ HERE
+
+//     console.log("[FETCH] start");
+//     let cancelled = false;
+//     console.log("[NEWSFEED] fetching with query:", query);
+
+
+//     async function load() {
+//       try {
+//         setLoading(true);
+//         setError("");
+//         let url = "/api/news";
+//         let options = {};
+
+//         // 🔴 SEARCH HAS ABSOLUTE PRIORITY
+//         if (query && query.trim().length > 0) {
+//           console.log("[NEWSFEED] SEARCH MODE ACTIVE");
+//           url = `/api/search?q=${encodeURIComponent(query)}`;
+//         }
+//         // 🟣 FOLLOWING
+//         else if (mode === "following" && user) {
+//           const token = await user.getIdToken();
+//           url = "/api/news/following";
+//           options.headers = {
+//             Authorization: `Bearer ${token}`,
+//           };
+//         }
+
+//         // 🟢 FOR-YOU ONLY WHEN NOT SEARCHING
+//         else if (mode === "for-you" && user) {
+//           console.log("[NEWSFEED] FOR-YOU MODE");
+//           const token = await user.getIdToken();
+//           url = "/api/news/for-you";
+//           options.headers = {
+//             Authorization: `Bearer ${token}`,
+//           };
+//         }
+
+//         // 🟡 ELSE = NORMAL FEED (/api/news)
+
+
+//         // let url = "/api/news";
+//         // let options = {};
+        
+//         // // 🔍 SEARCH HAS HIGHEST PRIORITY
+//         // if (query && query.trim().length > 0) {
+//         //   console.log("[NEWSFEED] SEARCH API HIT with:", query); // ✅ HERE
+//         //   url = `/api/search?q=${encodeURIComponent(query)}`;
+//         // }
+//         // // 🎯 For-you only when NOT searching
+//         // else if (mode === "for-you" && user) {
+//         //   const token = await user.getIdToken();
+//         //   url = "/api/news/for-you";
+//         //   options.headers = {
+//         //     Authorization: `Bearer ${token}`,
+//         //   };
+//         // }
+
+
+//         // if (mode === "for-you" && user) {
+//         //   const token = await user.getIdToken();
+//         //   url = "/api/news/for-you";
+//         //   options.headers = {
+//         //     Authorization: `Bearer ${token}`,
+//         //   };
+//         // }
+
+//         const res = await fetch(url, options);
+//         const data = await res.json();
+
+//         if (!res.ok || !data.ok) {
+//           throw new Error(data.error || "Failed to load news");
+//         }
+
+//         if (!cancelled) {
+//           // setArticles(data.posts || []);
+//           const items = data.posts ?? data.results ?? [];
+//           setArticles(items);
+//           console.log("[NEWSFEED] first article keys:", Object.keys(items[0] || {}));
+//           console.log("[NEWSFEED] first article:", items[0]);
+
+//         }
+       
+
+
+//       } catch (e) {
+//         if (!cancelled) setError(e.message);
+//       } finally {
+//         if (!cancelled) setLoading(false);
+//       }
+//     }
+
+//     load();
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, [authChecking, mode, user, query]);
+
+//   /* 🧱 UI STATES */
+// if (authChecking || (loading && articles.length === 0)) {
+//   return (
+//     <div className="space-y-4">
+//       <ArticleSkeleton />
+//       <ArticleSkeleton />
+//       <ArticleSkeleton />
+//     </div>
+//   );
+// }
+
+
+//   if (error) {
+//     return <div className="card p-4 text-red-400">{error}</div>;
+//   }
+//   if (!loading && query && articles.length === 0) {
+//     return (
+//       <div className="card p-6 text-center opacity-70">
+//         No results found for <b>{query}</b>
+//       </div>
+//     );
+//   }
+
+
+//   return (
+//     <div className="space-y-4">
+//       {query && (
+//         <div className="text-sm opacity-70">
+//           Showing results for{" "}
+//           <span className="font-semibold">“{query}”</span>
+//         </div>
+//       )}
+
+//       {articles.map((a) => (
+//         <ArticleCard
+//           key={a._id || a.id}
+//           article={a}
+//           onOpen={onOpen}
+//         />
+//       ))}
+//     </div>
+//   );
+
+// }
 
 
 
