@@ -1,20 +1,21 @@
-// //app/api/creators/[uid]/follow/route.ts
+// // //app/api/creators/[uid]/follow/route.ts
+
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/backend/lib/auth";
 import { connectToDatabase } from "@/backend/lib/db";
 import User from "@/backend/models/User";
+import Notification from "@/backend/models/Notification";
 
 export async function POST(
   req: Request,
   context: { params: Promise<{ uid: string }> }
 ) {
+
   const { uid: creatorUid } = await context.params;
-  console.log("🔥 FOLLOW ROUTE HIT", creatorUid);
 
   const { decoded } = await requireAuth(req);
   const followerUid = decoded.uid;
 
-  // 🛑 Self-follow guard
   if (followerUid === creatorUid) {
     return NextResponse.json(
       {
@@ -28,7 +29,6 @@ export async function POST(
 
   await connectToDatabase();
 
-  // Fetch both users
   const follower = await User.findOne({ uid: followerUid });
   const creator = await User.findOne({ uid: creatorUid });
 
@@ -42,17 +42,30 @@ export async function POST(
   const isFollowing = follower.followingCreators.includes(creatorUid);
 
   if (isFollowing) {
-    // 🔁 UNFOLLOW
+
+    // UNFOLLOW
     follower.followingCreators = follower.followingCreators.filter(
       (id: string) => id !== creatorUid
     );
+
     creator.followers = creator.followers.filter(
       (id: string) => id !== followerUid
     );
+
   } else {
-    // ➕ FOLLOW
+
+    // FOLLOW
     follower.followingCreators.push(creatorUid);
     creator.followers.push(followerUid);
+
+    // 🔔 CREATE NOTIFICATION
+    await Notification.create({
+      recipientUid: creatorUid,
+      actorUid: followerUid,
+      type: "follow",
+      entityId: creatorUid
+    });
+
   }
 
   await follower.save();
@@ -63,7 +76,83 @@ export async function POST(
     following: !isFollowing,
     followersCount: creator.followers.length,
   });
+
 }
+
+
+
+
+
+
+
+
+
+// import { NextResponse } from "next/server";
+// import { requireAuth } from "@/backend/lib/auth";
+// import { connectToDatabase } from "@/backend/lib/db";
+// import User from "@/backend/models/User";
+// import Notification from "@/backend/models/Notification";
+
+// export async function POST(
+//   req: Request,
+//   context: { params: Promise<{ uid: string }> }
+// ) {
+//   const { uid: creatorUid } = await context.params;
+//   console.log("🔥 FOLLOW ROUTE HIT", creatorUid);
+
+//   const { decoded } = await requireAuth(req);
+//   const followerUid = decoded.uid;
+
+//   // 🛑 Self-follow guard
+//   if (followerUid === creatorUid) {
+//     return NextResponse.json(
+//       {
+//         ok: false,
+//         code: "SELF_FOLLOW",
+//         error: "You can’t follow yourself",
+//       },
+//       { status: 400 }
+//     );
+//   }
+
+//   await connectToDatabase();
+
+//   // Fetch both users
+//   const follower = await User.findOne({ uid: followerUid });
+//   const creator = await User.findOne({ uid: creatorUid });
+
+//   if (!follower || !creator) {
+//     return NextResponse.json(
+//       { ok: false, error: "User not found" },
+//       { status: 404 }
+//     );
+//   }
+
+//   const isFollowing = follower.followingCreators.includes(creatorUid);
+
+//   if (!isFollowing) {
+//     // 🔁 UNFOLLOW
+//     follower.followingCreators = follower.followingCreators.filter(
+//       (id: string) => id !== creatorUid
+//     );
+//     creator.followers = creator.followers.filter(
+//       (id: string) => id !== followerUid
+//     );
+//   } else {
+//     // ➕ FOLLOW
+//     follower.followingCreators.push(creatorUid);
+//     creator.followers.push(followerUid);
+//   }
+
+//   await follower.save();
+//   await creator.save();
+
+//   return NextResponse.json({
+//     ok: true,
+//     following: !isFollowing,
+//     followersCount: creator.followers.length,
+//   });
+// }
 
 
 

@@ -1,7 +1,9 @@
+//app/api/comments/[id]/reactions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import Comment from "@/backend/models/Comment";
+import Notification from "@/backend/models/Notification";
 
 export async function POST(
   req: NextRequest,
@@ -42,6 +44,15 @@ export async function POST(
   }
 
   await comment.save();
+
+  if (type === "like" && comment.userUid !== uid) {
+    await Notification.create({
+      recipientUid: comment.userUid,
+      actorUid: uid,
+      type: "comment_like",
+      entityId: comment._id.toString()
+    });
+  }
 
   return NextResponse.json({
     ok: true,

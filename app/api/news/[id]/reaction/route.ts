@@ -1,65 +1,38 @@
-// // app/api/news/[id]/reaction/route.ts
-// app/api/news/[id]/reaction/route.ts
+// // // app/api/news/[id]/reaction/route.ts
+// // app/api/news/[id]/reaction/route.
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import News from "@/backend/models/News";
 import Reaction from "@/backend/models/Reaction";
+import Notification from "@/backend/models/Notification";
 
-/* =======================
-   TYPES
-======================= */
 type NewsLean = {
   _id: mongoose.Types.ObjectId;
-  title: string;
-  content: string;
-  mediaUrl?: string;
-  mediaType?: string;
-  category?: string;
-  authorName?: string;
-  authorEmail?: string;
-  createdAt?: Date;
+  authorUid: string;
   likesCount?: number;
   dislikesCount?: number;
-  commentsCount?: number;
 };
 
-/* =======================
-   POST: Like / Dislike
-======================= */
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+
   try {
+
     const { decoded } = await requireAuth(req);
     const { id } = await context.params;
 
     const { type } = await req.json();
 
-    if (type !== "like" && type !== "dislike") {
-      return NextResponse.json(
-        { ok: false, error: "Invalid reaction type" },
-        { status: 400 }
-      );
-    }
-
     await connectToDatabase();
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid post id" },
-        { status: 400 }
-      );
-    }
-
     const news = await News.findById(id);
+
     if (!news) {
-      return NextResponse.json(
-        { ok: false, error: "Post not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ ok: false, error: "Post not found" });
     }
 
     const existing = await Reaction.findOne({
@@ -71,6 +44,7 @@ export async function POST(
     let dislikesDelta = 0;
 
     if (!existing) {
+
       await Reaction.create({
         newsId: news._id,
         userUid: decoded.uid,
@@ -78,11 +52,27 @@ export async function POST(
       });
 
       type === "like" ? (likesDelta = 1) : (dislikesDelta = 1);
+
+      // 🔔 CREATE NOTIFICATION FOR POST LIKE
+      if (type === "like" && news.authorUid !== decoded.uid) {
+
+        await Notification.create({
+          recipientUid: news.authorUid,
+          actorUid: decoded.uid,
+          type: "post_like",
+          entityId: news._id.toString()
+        });
+
+      }
+
     } else if (existing.type === type) {
+
       await Reaction.deleteOne({ _id: existing._id });
 
       type === "like" ? (likesDelta = -1) : (dislikesDelta = -1);
+
     } else {
+
       const oldType = existing.type;
       existing.type = type;
       await existing.save();
@@ -94,6 +84,7 @@ export async function POST(
         likesDelta = 1;
         dislikesDelta = -1;
       }
+
     }
 
     await News.updateOne(
@@ -107,100 +98,243 @@ export async function POST(
     );
 
     const updated = await News.findById(news._id).lean<NewsLean>();
-    if (!updated) {
-      return NextResponse.json(
-        { ok: false, error: "Post not found after update" },
-        { status: 404 }
-      );
-    }
 
     return NextResponse.json({
       ok: true,
       post: {
-        id: updated._id.toString(),
-        likesCount: updated.likesCount ?? 0,
-        dislikesCount: updated.dislikesCount ?? 0,
+        id: updated?._id.toString(),
+        likesCount: updated?.likesCount ?? 0,
+        dislikesCount: updated?.dislikesCount ?? 0,
       },
     });
+
   } catch (err) {
-    console.error("POST reaction error:", err);
+
+    console.error(err);
+
     return NextResponse.json(
       { ok: false, error: "Internal error" },
       { status: 500 }
     );
+
   }
+
 }
 
-/* =======================
-   GET: Single News + userReaction
-======================= */
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await connectToDatabase();
 
-    const { id } = await context.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid post id" },
-        { status: 400 }
-      );
-    }
 
-    const post = await News.findById(id).lean<NewsLean>();
-    if (!post) {
-      return NextResponse.json(
-        { ok: false, error: "Post not found" },
-        { status: 404 }
-      );
-    }
 
-    let userReaction: "like" | "dislike" | null = null;
 
-    try {
-      const { decoded } = await requireAuth(req);
 
-      const reaction = await Reaction.findOne({
-        newsId: post._id,
-        userUid: decoded.uid,
-      }).lean<{ type: "like" | "dislike" } | null>();
 
-      if (reaction) userReaction = reaction.type;
-    } catch {
-      // not logged in
-    }
+
+
+
+
+// import { NextRequest, NextResponse } from "next/server";
+// import mongoose from "mongoose";
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import Reaction from "@/backend/models/Reaction";
+// import Notification from "@/backend/models/Notification";
+
+// /* =======================
+//    TYPES
+// ======================= */
+// type NewsLean = {
+//   _id: mongoose.Types.ObjectId;
+//   title: string;
+//   content: string;
+//   mediaUrl?: string;
+//   mediaType?: string;
+//   category?: string;
+//   authorName?: string;
+//   authorEmail?: string;
+//   createdAt?: Date;
+//   likesCount?: number;
+//   dislikesCount?: number;
+//   commentsCount?: number;
+// };
+
+// /* =======================
+//    POST: Like / Dislike
+// ======================= */
+// export async function POST(
+//   req: NextRequest,
+//   context: { params: Promise<{ id: string }> }
+// ) {
+//   try {
+//     const { decoded } = await requireAuth(req);
+//     const { id } = await context.params;
+
+//     const { type } = await req.json();
+
+//     if (type !== "like" && type !== "dislike") {
+//       return NextResponse.json(
+//         { ok: false, error: "Invalid reaction type" },
+//         { status: 400 }
+//       );
+//     }
+
+//     await connectToDatabase();
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return NextResponse.json(
+//         { ok: false, error: "Invalid post id" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const news = await News.findById(id);
+//     if (!news) {
+//       return NextResponse.json(
+//         { ok: false, error: "Post not found" },
+//         { status: 404 }
+//       );
+//     }
+
+//     const existing = await Reaction.findOne({
+//       newsId: news._id,
+//       userUid: decoded.uid,
+//     });
+
+//     let likesDelta = 0;
+//     let dislikesDelta = 0;
+
+//     if (!existing) {
+//       await Reaction.create({
+//         newsId: news._id,
+//         userUid: decoded.uid,
+//         type,
+//       });
+
+//       type === "like" ? (likesDelta = 1) : (dislikesDelta = 1);
+//     } else if (existing.type === type) {
+//       await Reaction.deleteOne({ _id: existing._id });
+
+//       type === "like" ? (likesDelta = -1) : (dislikesDelta = -1);
+//     } else {
+//       const oldType = existing.type;
+//       existing.type = type;
+//       await existing.save();
+
+//       if (oldType === "like") {
+//         likesDelta = -1;
+//         dislikesDelta = 1;
+//       } else {
+//         likesDelta = 1;
+//         dislikesDelta = -1;
+//       }
+//     }
+
+//     await News.updateOne(
+//       { _id: news._id },
+//       {
+//         $inc: {
+//           likesCount: likesDelta,
+//           dislikesCount: dislikesDelta,
+//         },
+//       }
+//     );
+
+
+//     const updated = await News.findById(news._id).lean<NewsLean>();
+//     if (!updated) {
+//       return NextResponse.json(
+//         { ok: false, error: "Post not found after update" },
+//         { status: 404 }
+//       );
+//     }
+
+//     return NextResponse.json({
+//       ok: true,
+//       post: {
+//         id: updated._id.toString(),
+//         likesCount: updated.likesCount ?? 0,
+//         dislikesCount: updated.dislikesCount ?? 0,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("POST reaction error:", err);
+//     return NextResponse.json(
+//       { ok: false, error: "Internal error" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// /* =======================
+//    GET: Single News + userReaction
+// ======================= */
+// export async function GET(
+//   req: NextRequest,
+//   context: { params: Promise<{ id: string }> }
+// ) {
+//   try {
+//     await connectToDatabase();
+
+//     const { id } = await context.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return NextResponse.json(
+//         { ok: false, error: "Invalid post id" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const post = await News.findById(id).lean<NewsLean>();
+//     if (!post) {
+//       return NextResponse.json(
+//         { ok: false, error: "Post not found" },
+//         { status: 404 }
+//       );
+//     }
+
+//     let userReaction: "like" | "dislike" | null = null;
+
+//     try {
+//       const { decoded } = await requireAuth(req);
+
+//       const reaction = await Reaction.findOne({
+//         newsId: post._id,
+//         userUid: decoded.uid,
+//       }).lean<{ type: "like" | "dislike" } | null>();
+
+//       if (reaction) userReaction = reaction.type;
+//     } catch {
+//       // not logged in
+//     }
  
 
 
-    return NextResponse.json({
-      ok: true,
-      post: {
-        id: post._id.toString(),
-        title: post.title,
-        content: post.content,
-        mediaUrl: post.mediaUrl || "",
-        mediaType: post.mediaType || "none",
-        category: post.category || "general",
-        authorName: post.authorName || "",
-        authorEmail: post.authorEmail || "",
-        createdAt: post.createdAt?.toISOString() || "",
-        likesCount: post.likesCount ?? 0,
-        dislikesCount: post.dislikesCount ?? 0,
-        commentsCount: post.commentsCount ?? 0,
-        userReaction,
-      },
-    });
-  } catch (err) {
-    console.error("GET news error:", err);
-    return NextResponse.json(
-      { ok: false, error: "Internal error" },
-      { status: 500 }
-    );
-  }
-}
+//     return NextResponse.json({
+//       ok: true,
+//       post: {
+//         id: post._id.toString(),
+//         title: post.title,
+//         content: post.content,
+//         mediaUrl: post.mediaUrl || "",
+//         mediaType: post.mediaType || "none",
+//         category: post.category || "general",
+//         authorName: post.authorName || "",
+//         authorEmail: post.authorEmail || "",
+//         createdAt: post.createdAt?.toISOString() || "",
+//         likesCount: post.likesCount ?? 0,
+//         dislikesCount: post.dislikesCount ?? 0,
+//         commentsCount: post.commentsCount ?? 0,
+//         userReaction,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("GET news error:", err);
+//     return NextResponse.json(
+//       { ok: false, error: "Internal error" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

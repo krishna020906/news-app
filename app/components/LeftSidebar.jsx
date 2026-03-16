@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useEffect } from "react";
 
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   HomeIcon,
@@ -27,6 +28,7 @@ export default function LeftSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [notifCount, setNotifCount] = useState(0);
   const tab = searchParams.get("tab");
   useEffect(() => {
     try {
@@ -49,6 +51,38 @@ export default function LeftSidebar() {
     localStorage.setItem("theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+  useEffect(() => {
+
+    async function loadCount() {
+
+      try {
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        const token = await user.getIdToken();
+
+        const res = await fetch("/api/notifications/count", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          setNotifCount(data.count);
+        }
+
+      } catch {}
+
+    }
+
+    loadCount();
+
+  }, []);
 
   const NAV_ITEMS = [
     { key: "home", label: "Top Headlines", href: "/?tab=top", icon: HomeIcon },
@@ -141,7 +175,18 @@ export default function LeftSidebar() {
               onClick={() => router.push("/notifications")}
               className="group flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-orange-500/10 transition"
             >
-              <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" />
+              {/* <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" /> */}
+              <div className="relative">
+
+                <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" />
+
+                {notifCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </span>
+                )}
+
+              </div>
               {expanded && (
                 <span className="text-sm font-medium transition">
                   Notifications

@@ -1,3 +1,4 @@
+//app/api/creator/[id]/posts/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/backend/lib/db";
