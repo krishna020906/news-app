@@ -75,7 +75,7 @@ export default function SignUpPage() {
         </form>
 
         <p className="text-center card-body text-sm mt-4">
-          Already have an account? <a href="/login" className="text-orange-500 font-medium">Login</a>
+          Already have an account? <a href="/sign-in" className="text-orange-500 font-medium">Login</a>
         </p>
       </div>
     </div>

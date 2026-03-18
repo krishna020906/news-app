@@ -172,7 +172,7 @@ export default function LeftSidebar() {
 
             {/* Notifications */}
             <button
-              onClick={() => router.push("/notifications")}
+              onClick={() => router.push("/?tab=notifications")}
               className="group flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-orange-500/10 transition"
             >
               {/* <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" /> */}

@@ -10,33 +10,36 @@ import Recommendation from "./Recommendation";
 import MobileNav from "./MobileNav";
 import ArticleModal from "./ArticleModal";
 import NewsFeed from "./NewsFeed";
-
+import NotificationFeed from "./NotificationFeed";
 import LeftSidebar from "./LeftSidebar";
 import { useRouter, useSearchParams } from "next/navigation";
 import StreakWidget from "./StreakWidget"
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import TrendingWidget from "./TrendingWidget"
-
+import { usePathname } from "next/navigation";
 
 
 const sampleArticles = [ /* your sample data here */ ];
 
 export default function MainPage() {
+  const pathname = usePathname()
   const [streak, setStreak] = useState(0);
-
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+  const isNotifications = tab === "notifications";
   
   
 
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+ 
   // const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState("");
 
 
-  const tab = searchParams.get("tab");
+  
 
   let mode = "for-you";
   if (tab === "top") mode = "top";
@@ -123,14 +126,18 @@ export default function MainPage() {
           </div> */}
 
      
-          <NewsFeed
-            mode={mode}          // 👈 NEW
-            query={query}
-            category={category}
-            onOpen={(article) => {
-              router.push(`/news/${article.id}`);
-            }}
-          />
+          {isNotifications ? (
+            <NotificationFeed />
+          ) : (
+            <NewsFeed
+              mode={mode}
+              query={query}
+              category={category}
+              onOpen={(article) => {
+                router.push(`/news/${article.id}`);
+              }}
+            />
+          )}
           
           
           
