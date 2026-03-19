@@ -18,6 +18,9 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import TrendingWidget from "./TrendingWidget"
 import { usePathname } from "next/navigation";
+import MyNewsFeed from "./MyNewsFeed";
+import SavedFeed from "./SavedFeed";
+import ProfileFeed from "./ProfileFeed";
 
 
 const sampleArticles = [ /* your sample data here */ ];
@@ -27,13 +30,16 @@ export default function MainPage() {
   const [streak, setStreak] = useState(0);
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
-  const isNotifications = tab === "notifications";
-  
-  
+  const isNotifications = tab === "notifications";  
+  const isMyNews = tab === "my-news";
+  const isSaved = tab === "saved";
+  const isProfile = tab === "profile";
+  const showFilters = !tab || tab === "top" || tab === "following" || tab === "my-news";
 
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState(null);
   const router = useRouter();
+
  
   // const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState("");
@@ -115,12 +121,14 @@ export default function MainPage() {
         <LeftSidebar />
 
         <section className="flex-1 space-y-4">
-          <FilterChips
-            selectedCategory={category}
-            onChange={(value) => {
-              setCategory(value);
-            }}
-          />
+          {showFilters && (
+            <FilterChips
+              selectedCategory={category}
+              onChange={(value) => {
+                setCategory(value);
+              }}
+            />
+          )}
           {/* <div className="text-green-500 text-xl">
             PARENT RENDERING CONTENT
           </div> */}
@@ -128,6 +136,16 @@ export default function MainPage() {
      
           {isNotifications ? (
             <NotificationFeed />
+
+          ) : isMyNews ? (
+            <MyNewsFeed />
+
+          ) : isSaved ? (
+            <SavedFeed />
+
+          ) : isProfile ? (
+            <ProfileFeed />
+
           ) : (
             <NewsFeed
               mode={mode}

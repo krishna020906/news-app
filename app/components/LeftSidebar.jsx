@@ -88,9 +88,9 @@ export default function LeftSidebar() {
     { key: "home", label: "Top Headlines", href: "/?tab=top", icon: HomeIcon },
     { key: "for-you", label: "For You", href: "/", icon: SparklesIcon },
     { key: "following", label: "Following", href: "/?tab=following", icon: UserGroupIcon },
-    { key: "my-news", label: "My News", href: "/my-news", icon: PencilSquareIcon },
-    { key: "saved", label: "Saved News", href: "/saved", icon: BookmarkIcon },
-    { key: "profile", label: "Profile", href: "/profile", icon: UserCircleIcon },
+    { key: "my-news", label: "My News", href: "/?tab=my-news", icon: PencilSquareIcon },
+    { key: "saved", label: "Saved News", href: "/?tab=saved", icon: BookmarkIcon },
+    { key: "profile", label: "Profile", href: "/?tab=profile", icon: UserCircleIcon },
   ];
 
   const handleLogout = async () => {
@@ -98,6 +98,7 @@ export default function LeftSidebar() {
     await signOut(auth);
     router.push("/");
   };
+  const isNotificationsActive = tab === "notifications";
 
   // const toggleDark = () => {
   //   setDarkMode(!darkMode);
@@ -135,8 +136,12 @@ export default function LeftSidebar() {
                 isActive = pathname === "/" && !tab;
               } else if (item.key === "home") {
                 isActive = pathname === "/" && tab === "top";
-              } else if (item.key === "following") {
-                isActive = pathname === "/" && tab === "following";
+              } else if (item.key === "my-news") {
+                isActive = tab === "my-news";
+              } else if (item.key === "saved") {
+                isActive = tab === "saved";
+              } else if (item.key === "profile") {
+                isActive = tab === "profile";
               } else {
                 isActive = pathname.startsWith(item.href);
               }
@@ -171,17 +176,30 @@ export default function LeftSidebar() {
             })}
 
             {/* Notifications */}
+
+
+
             <button
               onClick={() => router.push("/?tab=notifications")}
-              className="group flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-orange-500/10 transition"
+              className={`group flex items-center gap-3 w-full px-3 py-2 rounded-xl transition-all duration-300 ${
+                isNotificationsActive
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "hover:bg-orange-500/10"
+              }`}
             >
               {/* <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" /> */}
               <div className="relative">
 
-                <BellIcon className="w-5 h-5 text-[var(--text-body)] group-hover:text-orange-500 transition" />
+                <BellIcon
+                  className={`w-5 h-5 transition ${
+                    isNotificationsActive
+                      ? "text-white"
+                      : "text-[var(--text-body)] group-hover:text-orange-500"
+                  }`}
+                />
 
                 {notifCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                  <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] px-1.5 rounded-full">
                     {notifCount > 9 ? "9+" : notifCount}
                   </span>
                 )}

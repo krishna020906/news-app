@@ -65,7 +65,7 @@ export default function NotificationFeed() {
 
         <div
           key={n.id}
-          className="flex items-start gap-3 p-4 rounded-xl border border-[var(--card-border)] hover:bg-[var(--badge-bg)] transition"
+          className="flex items-start gap-3 p-4 hover:-translate-y-[1px] rounded-xl border border-[var(--card-border)] hover:border-orange-500 hover:ring-1 hover:ring-orange-500/40 hover:bg-[var(--badge-bg)] transition-all duration-200 cursor-pointer"
         >
 
           {/* Profile Image */}
