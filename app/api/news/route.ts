@@ -8,6 +8,10 @@ import User from "@/backend/models/User";
 
 /* ===================== GET ===================== */
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+
+  const q = searchParams.get("q");
+  const time = searchParams.get("time");
   try {
     await connectToDatabase();
 
@@ -26,7 +30,30 @@ export async function GET(req: Request) {
     if (cursor) {
       query.createdAt = { $lt: new Date(cursor) };
     }
+    if (q) {
+      query.title = { $regex: q, $options: "i" };
+    }
+    if (time) {
+      const now = new Date();
+      let fromDate = null;
+      if (time === "1h") fromDate = new Date(now.getTime() - 60 * 60 * 1000);
+      if (time === "24h") fromDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      if (time === "7d") fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      if (time === "30d") fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+
+      // if (time === "1h") fromDate = new Date(now - 60 * 60 * 1000);
+      // if (time === "24h") fromDate = new Date(now - 24 * 60 * 60 * 1000);
+      // if (time === "7d") fromDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+      // if (time === "30d") fromDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+      if (fromDate) {
+        query.createdAt = {
+          ...(query.createdAt || {}),
+          $gte: fromDate,
+        };
+      }
+    }
     const posts = await News.find(query)
       .sort({ createdAt: -1 })
       .limit(limit + 1)

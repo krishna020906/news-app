@@ -39,6 +39,9 @@ export default function MainPage() {
   const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState(null);
   const router = useRouter();
+  
+  const queryParam = searchParams.get("q");
+  const time = searchParams.get("time");
 
  
   // const initialQuery = searchParams.get("q") || "";
@@ -150,6 +153,7 @@ export default function MainPage() {
             <NewsFeed
               mode={mode}
               query={query}
+              time={time}
               category={category}
               onOpen={(article) => {
                 router.push(`/news/${article.id}`);

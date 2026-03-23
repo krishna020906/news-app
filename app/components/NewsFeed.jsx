@@ -21,7 +21,7 @@ function ArticleSkeleton() {
   );
 }
 
-export default function NewsFeed({ onOpen, query, category, mode }) {
+export default function NewsFeed({ onOpen, query, category, mode , time}) {
 
   const [articles, setArticles] = useState([]);
   const [cursor, setCursor] = useState(null);
@@ -54,6 +54,8 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
     try {
 
       let url = `/api/news?limit=10`;
+      if (query) url += `&q=${encodeURIComponent(query)}`;
+      if (time) url += `&time=${time}`;
 
       if (cursor) {
         url += `&cursor=${cursor}`;
@@ -93,7 +95,7 @@ export default function NewsFeed({ onOpen, query, category, mode }) {
 
     loadPosts();
 
-  }, [authChecking, mode, query]);
+  }, [authChecking, mode, query , time]);
 
   /* INFINITE SCROLL */
   useEffect(() => {
