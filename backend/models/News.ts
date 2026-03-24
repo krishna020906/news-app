@@ -120,10 +120,17 @@ const NewsSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+    reactions: {
+      hot_take: { type: Number, default: 0 },
+      insight: { type: Number, default: 0 },
+      funny: { type: Number, default: 0 },
+      mind_blown: { type: Number, default: 0 },
+    }
   },
   {
     timestamps: true,
-  }
+  }, 
+
 );
 
 // Feed sorting

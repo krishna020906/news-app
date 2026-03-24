@@ -8,6 +8,7 @@ import "@/backend/firebase/config";
 import CommentItem from "../../components/CommentItem";
 import Link from 'next/link';
 import FollowButton from "../../components/FollowButton";
+import ReactionBar from "../../components/ReactionBar";
 
 import {
   HandThumbUpIcon as LikeOutline,
@@ -638,6 +639,14 @@ export default function NewsDetailPage() {
               </div>
 
             </div>
+            {/* Divider */}
+            <div className="my-6 h-px w-full bg-[var(--card-border)]" />
+
+            <ReactionBar
+              newsId={post.id}
+              initialCounts={post.reactions}
+            />
+
             {/* Divider */}
             <div className="my-6 h-px w-full bg-[var(--card-border)]" />
 

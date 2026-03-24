@@ -6,25 +6,14 @@ import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import News from "@/backend/models/News";
 import Reaction from "@/backend/models/Reaction";
-import Notification from "@/backend/models/Notification";
-
-type NewsLean = {
-  _id: mongoose.Types.ObjectId;
-  authorUid: string;
-  likesCount?: number;
-  dislikesCount?: number;
-};
 
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-
   try {
-
     const { decoded } = await requireAuth(req);
     const { id } = await context.params;
-
     const { type } = await req.json();
 
     await connectToDatabase();
@@ -40,86 +29,189 @@ export async function POST(
       userUid: decoded.uid,
     });
 
-    let likesDelta = 0;
-    let dislikesDelta = 0;
+    // ✅ NEW REACTION LOGIC (NO likesDelta ANYMORE)
+    let inc: Record<string, number> = {};
 
     if (!existing) {
-
+      // ➕ ADD REACTION
       await Reaction.create({
         newsId: news._id,
         userUid: decoded.uid,
         type,
       });
 
-      type === "like" ? (likesDelta = 1) : (dislikesDelta = 1);
-
-      // 🔔 CREATE NOTIFICATION FOR POST LIKE
-      if (type === "like" && news.authorUid !== decoded.uid) {
-
-        await Notification.create({
-          recipientUid: news.authorUid,
-          actorUid: decoded.uid,
-          type: "post_like",
-          entityId: news._id.toString()
-        });
-
-      }
+      inc[`reactions.${type}`] = 1;
 
     } else if (existing.type === type) {
-
+      // ❌ REMOVE REACTION
       await Reaction.deleteOne({ _id: existing._id });
 
-      type === "like" ? (likesDelta = -1) : (dislikesDelta = -1);
+      inc[`reactions.${type}`] = -1;
 
     } else {
-
+      // 🔄 SWITCH REACTION
       const oldType = existing.type;
+
       existing.type = type;
       await existing.save();
 
-      if (oldType === "like") {
-        likesDelta = -1;
-        dislikesDelta = 1;
-      } else {
-        likesDelta = 1;
-        dislikesDelta = -1;
-      }
-
+      inc[`reactions.${oldType}`] = -1;
+      inc[`reactions.${type}`] = 1;
     }
 
+    // ✅ UPDATE NEWS COUNTS
     await News.updateOne(
       { _id: news._id },
-      {
-        $inc: {
-          likesCount: likesDelta,
-          dislikesCount: dislikesDelta,
-        },
-      }
+      { $inc: inc }
     );
 
-    const updated = await News.findById(news._id).lean<NewsLean>();
+    const updated = await News.findById(news._id).lean();
+    const reactions = Array.isArray(updated) ? {} : updated?.reactions || {};
 
     return NextResponse.json({
       ok: true,
-      post: {
-        id: updated?._id.toString(),
-        likesCount: updated?.likesCount ?? 0,
-        dislikesCount: updated?.dislikesCount ?? 0,
-      },
+      reactions: reactions,
     });
 
-  } catch (err) {
 
+  } catch (err) {
     console.error(err);
 
     return NextResponse.json(
       { ok: false, error: "Internal error" },
       { status: 500 }
     );
-
   }
-
 }
+
+
+
+
+
+
+
+
+// import { NextRequest, NextResponse } from "next/server";
+// import mongoose from "mongoose";
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import Reaction from "@/backend/models/Reaction";
+// import Notification from "@/backend/models/Notification";
+
+// type NewsLean = {
+//   _id: mongoose.Types.ObjectId;
+//   authorUid: string;
+//   likesCount?: number;
+//   dislikesCount?: number;
+// };
+
+// export async function POST(
+//   req: NextRequest,
+//   context: { params: Promise<{ id: string }> }
+// ) {
+
+//   try {
+
+//     const { decoded } = await requireAuth(req);
+//     const { id } = await context.params;
+
+//     const { type } = await req.json();
+
+//     await connectToDatabase();
+
+//     const news = await News.findById(id);
+
+//     if (!news) {
+//       return NextResponse.json({ ok: false, error: "Post not found" });
+//     }
+
+//     const existing = await Reaction.findOne({
+//       newsId: news._id,
+//       userUid: decoded.uid,
+//     });
+
+//     let likesDelta = 0;
+//     let dislikesDelta = 0;
+    
+
+//     if (!existing) {
+
+//       await Reaction.create({
+//         newsId: news._id,
+//         userUid: decoded.uid,
+//         type,
+//       });
+
+//       type === "like" ? (likesDelta = 1) : (dislikesDelta = 1);
+
+//       // 🔔 CREATE NOTIFICATION FOR POST LIKE
+//       if (type === "like" && news.authorUid !== decoded.uid) {
+
+//         await Notification.create({
+//           recipientUid: news.authorUid,
+//           actorUid: decoded.uid,
+//           type: "post_like",
+//           entityId: news._id.toString()
+//         });
+
+//       }
+
+//     } else if (existing.type === type) {
+
+//       await Reaction.deleteOne({ _id: existing._id });
+
+//       type === "like" ? (likesDelta = -1) : (dislikesDelta = -1);
+
+//     } else {
+
+//       const oldType = existing.type;
+//       existing.type = type;
+//       await existing.save();
+
+//       if (oldType === "like") {
+//         likesDelta = -1;
+//         dislikesDelta = 1;
+//       } else {
+//         likesDelta = 1;
+//         dislikesDelta = -1;
+//       }
+
+//     }
+
+//     await News.updateOne(
+//       { _id: news._id },
+//       {
+//         $inc: {
+//           likesCount: likesDelta,
+//           dislikesCount: dislikesDelta,
+//         },
+//       }
+//     );
+
+//     const updated = await News.findById(news._id).lean<NewsLean>();
+
+//     return NextResponse.json({
+//       ok: true,
+//       post: {
+//         id: updated?._id.toString(),
+//         likesCount: updated?.likesCount ?? 0,
+//         dislikesCount: updated?.dislikesCount ?? 0,
+//       },
+//     });
+
+//   } catch (err) {
+
+//     console.error(err);
+
+//     return NextResponse.json(
+//       { ok: false, error: "Internal error" },
+//       { status: 500 }
+//     );
+
+//   }
+
+// }
 
 
 

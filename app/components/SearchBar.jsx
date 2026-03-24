@@ -53,7 +53,7 @@ export default function SearchBar({ value, onChange }) {
           <FunnelIcon
             className={`w-5 h-5 transition ${
               timeFilter
-                ? "text-orange-500"
+                ? "text-orange-500 drop-shadow-[0_0_4px_rgba(249,115,22,0.6)]"
                 : "text-[var(--text-body)] hover:text-orange-500"
             }`}
           />
