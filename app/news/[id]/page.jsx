@@ -38,7 +38,7 @@ function formatTimeAgo(iso) {
 
   const months = Math.floor(days / 30);
   if (months < 12) return `${months}mo ago`;
-
+ 
   const years = Math.floor(months / 12);
   return `${years}y ago`;
 }
@@ -143,6 +143,7 @@ export default function NewsDetailPage() {
     };
   }, [id , sort]);
   useEffect(() => {
+    console.log("POST OBJECT:", post);
     function handleScroll() {
       if (!articleRef.current) return;
 
@@ -328,6 +329,7 @@ export default function NewsDetailPage() {
         />
       </div>
     )} */}
+    
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Back / breadcrumb */}
@@ -642,10 +644,16 @@ export default function NewsDetailPage() {
             {/* Divider */}
             <div className="my-6 h-px w-full bg-[var(--card-border)]" />
 
-            <ReactionBar
+            {/* <ReactionBar
               newsId={post.id}
               initialCounts={post.reactions}
-            />
+            /> */}
+            {post && (
+              <ReactionBar 
+                newsId={post.id}   // ✅ FIX
+                initialCounts={post.reactions}
+              />
+            )}
 
             {/* Divider */}
             <div className="my-6 h-px w-full bg-[var(--card-border)]" />
@@ -669,7 +677,7 @@ export default function NewsDetailPage() {
                   <option value="top">🔥 Top</option>
                   <option value="new">🕒 Newest</option>
                 </select>
-
+                
               </div>
 
               {/* Comment form */}

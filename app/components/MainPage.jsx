@@ -156,7 +156,7 @@ export default function MainPage() {
               time={time}
               category={category}
               onOpen={(article) => {
-                router.push(`/news/${article.id}`);
+                router.push(`/news/${article._id}`);
               }}
             />
           )}

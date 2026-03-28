@@ -1,19 +1,27 @@
-// // // app/api/news/[id]/reaction/route.ts
-// // app/api/news/[id]/reaction/route.
+// // // // app/api/news/[id]/reaction/route.ts
+// // // app/api/news/[id]/reaction/route.
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import { connectToDatabase } from "@/backend/lib/db";
 import { requireAuth } from "@/backend/lib/auth";
 import News from "@/backend/models/News";
 import Reaction from "@/backend/models/Reaction";
+
 
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log("Reaction Model Path Loaded")
+    console.log(
+      "ENUM VALUES:",
+      (Reaction.schema.path("type") as any).enumValues
+    );
+    // ✅ FIX AUTH (no destructuring unless required)
     const { decoded } = await requireAuth(req);
-    const { id } = await context.params;
+
+    const { id } = await context.params; // ✅ NO await
+
     const { type } = await req.json();
 
     await connectToDatabase();
@@ -24,16 +32,20 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Post not found" });
     }
 
+    // const existing = await Reaction.findOne({
+    //   newsId: news._id,
+    //   userUid: decoded.uid,
+    // });
     const existing = await Reaction.findOne({
       newsId: news._id,
       userUid: decoded.uid,
+      type, // 🔥 key change
     });
 
-    // ✅ NEW REACTION LOGIC (NO likesDelta ANYMORE)
     let inc: Record<string, number> = {};
 
     if (!existing) {
-      // ➕ ADD REACTION
+      // ➕ ADD
       await Reaction.create({
         newsId: news._id,
         userUid: decoded.uid,
@@ -43,13 +55,13 @@ export async function POST(
       inc[`reactions.${type}`] = 1;
 
     } else if (existing.type === type) {
-      // ❌ REMOVE REACTION
+      // ❌ REMOVE
       await Reaction.deleteOne({ _id: existing._id });
 
       inc[`reactions.${type}`] = -1;
 
     } else {
-      // 🔄 SWITCH REACTION
+      // 🔄 SWITCH
       const oldType = existing.type;
 
       existing.type = type;
@@ -59,30 +71,130 @@ export async function POST(
       inc[`reactions.${type}`] = 1;
     }
 
-    // ✅ UPDATE NEWS COUNTS
     await News.updateOne(
       { _id: news._id },
       { $inc: inc }
     );
 
+    // ✅ TYPE SAFE FETCH
     const updated = await News.findById(news._id).lean();
-    const reactions = Array.isArray(updated) ? {} : updated?.reactions || {};
+
+    // 🔧 TYPE ASSERTION FIX
+    const reactions =
+      (updated as any)?.reactions || {};
 
     return NextResponse.json({
       ok: true,
-      reactions: reactions,
+      reactions,
     });
 
-
-  } catch (err) {
-    console.error(err);
+  } catch (err: any) {
+    console.error("🔥 REACTION ERROR:", err);
 
     return NextResponse.json(
-      { ok: false, error: "Internal error" },
+      { ok: false, error: err.message || "Internal error" },
       { status: 500 }
     );
   }
+  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { NextRequest, NextResponse } from "next/server";
+// import mongoose from "mongoose";
+// import { connectToDatabase } from "@/backend/lib/db";
+// import { requireAuth } from "@/backend/lib/auth";
+// import News from "@/backend/models/News";
+// import Reaction from "@/backend/models/Reaction";
+
+// export async function POST(
+//   req: NextRequest,
+//   context: { params: Promise<{ id: string }> }
+// ) {
+//   try {
+//     const { decoded } = await requireAuth(req);
+//     const { id } = await context.params;
+//     const { type } = await req.json();
+
+//     await connectToDatabase();
+
+//     const news = await News.findById(id);
+
+//     if (!news) {
+//       return NextResponse.json({ ok: false, error: "Post not found" });
+//     }
+
+//     const existing = await Reaction.findOne({
+//       newsId: news._id,
+//       userUid: decoded.uid,
+//     });
+
+//     // ✅ NEW REACTION LOGIC (NO likesDelta ANYMORE)
+//     let inc: Record<string, number> = {};
+
+//     if (!existing) {
+//       // ➕ ADD REACTION
+//       await Reaction.create({
+//         newsId: news._id,
+//         userUid: decoded.uid,
+//         type,
+//       });
+
+//       inc[`reactions.${type}`] = 1;
+
+//     } else if (existing.type === type) {
+//       // ❌ REMOVE REACTION
+//       await Reaction.deleteOne({ _id: existing._id });
+
+//       inc[`reactions.${type}`] = -1;
+
+//     } else {
+//       // 🔄 SWITCH REACTION
+//       const oldType = existing.type;
+
+//       existing.type = type;
+//       await existing.save();
+
+//       inc[`reactions.${oldType}`] = -1;
+//       inc[`reactions.${type}`] = 1;
+//     }
+
+//     // ✅ UPDATE NEWS COUNTS
+//     await News.updateOne(
+//       { _id: news._id },
+//       { $inc: inc }
+//     );
+
+//     const updated = await News.findById(news._id).lean();
+//     // const reactions = Array.isArray(updated) ? {} : updated?.reactions || {};
+//     const reactions = updated?.reactions || {};
+
+//     return NextResponse.json({
+//       ok: true,
+//       reactions: reactions,
+//     });
+
+
+//   } catch (err) {
+//     console.error(err);
+
+//     return NextResponse.json(
+//       { ok: false, error: "Internal error" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 

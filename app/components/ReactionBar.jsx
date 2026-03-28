@@ -1,6 +1,8 @@
+//app/compnents/ReactionBar.jsx
 "use client";
 
 import { useState } from "react";
+import { getAuth } from "firebase/auth";
 
 const REACTIONS = [
   { key: "hot_take", label: "Hot Take", emoji: "😤" },
@@ -13,7 +15,8 @@ export default function ReactionBar({ newsId, initialCounts }) {
   const [counts, setCounts] = useState(initialCounts || {});
   const [userReaction, setUserReaction] = useState(null);
 
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const total = Object.values(counts || {}).reduce((a, b) => a + b, 0);
 
   const topReaction = REACTIONS.reduce((max, r) => {
     return (counts[r.key] || 0) > (counts[max.key] || 0) ? r : max;
@@ -24,10 +27,27 @@ export default function ReactionBar({ newsId, initialCounts }) {
       ? Math.round(((counts[topReaction.key] || 0) / total) * 100)
       : 0;
 
+  
+
   async function handleReact(type) {
     try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+
+      if (!user) {
+        console.error("User not logged in");
+        return;
+      }
+
+      const token = await user.getIdToken();
+
       const res = await fetch(`/api/news/${newsId}/reaction`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ THIS WAS MISSING
+        },
         body: JSON.stringify({ type }),
       });
 
@@ -35,14 +55,14 @@ export default function ReactionBar({ newsId, initialCounts }) {
 
       if (data.ok) {
         setCounts(data.reactions);
-
-        setUserReaction((prev) =>
-          prev === type ? null : type
-        );
+        setUserReaction((prev) => (prev === type ? null : type));
+      } else {
+        console.error("API error:", data.error);
       }
     } catch (err) {
       console.error(err);
     }
+    console.log("newsId:", newsId);
   }
 
   return (
