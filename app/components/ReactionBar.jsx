@@ -30,6 +30,7 @@ export default function ReactionBar({ newsId, initialCounts }) {
   
 
   async function handleReact(type) {
+
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -63,6 +64,7 @@ export default function ReactionBar({ newsId, initialCounts }) {
       console.error(err);
     }
     console.log("newsId:", newsId);
+    
   }
 
   return (

@@ -108,8 +108,8 @@ const NewsSchema = new mongoose.Schema(
     /* =====================
        📊 ENGAGEMENT
     ===================== */
-    likesCount: { type: Number, default: 0 },
-    dislikesCount: { type: Number, default: 0 },
+    // likesCount: { type: Number, default: 0 },
+    // dislikesCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
 
     /* =====================
@@ -121,6 +121,8 @@ const NewsSchema = new mongoose.Schema(
       index: true,
     },
     reactions: {
+      like: { type: Number, default: 0 },
+      dislike: { type: Number, default: 0 },
       hot_take: { type: Number, default: 0 },
       insight: { type: Number, default: 0 },
       funny: { type: Number, default: 0 },
@@ -135,6 +137,7 @@ const NewsSchema = new mongoose.Schema(
 
 // Feed sorting
 NewsSchema.index({ createdAt: -1 });
+
 
 export default mongoose.models.News ||
   mongoose.model("News", NewsSchema);

@@ -84,7 +84,7 @@ export default function NewsDetailPage() {
 
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
-
+ 
   // load the post
   useEffect(() => {
     if (!id) return;
@@ -184,51 +184,46 @@ export default function NewsDetailPage() {
   }, []);
 
 
-  async function handleReact(type) {
-    if (!post) return;
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("Must be logged in to react");
-        return;
-      }
-      const idToken = await user.getIdToken();
+ async function handleReact(type) {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-      const res = await fetch(`/api/news/${post.id}/reaction`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ type }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to react");
-      }
-
-      setPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              likesCount: data.post.likesCount,
-              dislikesCount: data.post.dislikesCount,
-            }
-          : prev
-      );
-      if (type === "like") {
-        setLiked((v) => !v);
-        setDisliked(false);
-      } else {
-        setDisliked((v) => !v);
-        setLiked(false);
-      }
-    } catch (err) {
-      console.error("Detail react error:", err);
+    if (!user) {
+      console.error("Not logged in");
+      return;
     }
+
+    const token = await user.getIdToken();
+
+    const res = await fetch(`/api/news/${post.id}/reaction`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ type }),
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      throw new Error(data.error);
+    }
+
+    // ✅ SAME AS REACTION BAR
+    setPost((prev) =>
+      prev
+        ? {
+            ...prev,
+            reactions: data.reactions,
+          }
+        : prev
+    );
+  } catch (err) {
+    console.error(err);
   }
+ }
 
   async function handleSubmitComment(e) {
     e.preventDefault();
@@ -623,7 +618,7 @@ export default function NewsDetailPage() {
                   ) : (
                     <LikeOutline className="w-5 h-5 opacity-70" />
                   )}
-                  {post.likesCount ?? 0}
+                  {post.reactions?.like || 0}
                 </button>
 
                 <button
@@ -635,7 +630,7 @@ export default function NewsDetailPage() {
                   ) : (
                     <DislikeOutline className="w-5 h-5 opacity-70" />
                   )}
-                  {post.dislikesCount ?? 0}
+                  {post.reactions?.dislike || 0}
                 </button>
 
               </div>

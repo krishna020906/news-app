@@ -7,10 +7,11 @@ import News from "@/backend/models/News";
 import Reaction from "@/backend/models/Reaction";
 
 
-export async function POST(
+export async function POST(   
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  
   try {
     console.log("Reaction Model Path Loaded")
     console.log(
@@ -23,6 +24,7 @@ export async function POST(
     const { id } = await context.params; // ✅ NO await
 
     const { type } = await req.json();
+    console.log("TYPE RECEIVED:", type);
 
     await connectToDatabase();
 
@@ -46,12 +48,26 @@ export async function POST(
 
     if (!existing) {
       // ➕ ADD
-      await Reaction.create({
-        newsId: news._id,
-        userUid: decoded.uid,
-        type,
-      });
-
+      // await Reaction.create({
+      //   newsId: news._id,
+      //   userUid: decoded.uid,
+      //   type,
+      // });
+      await Reaction.updateOne(
+        {
+          newsId: news._id,
+          userUid: decoded.uid,
+          type,
+        },
+        {
+          $set: {
+            newsId: news._id,
+            userUid: decoded.uid,
+            type,
+          },
+        },
+        { upsert: true }
+      );
       inc[`reactions.${type}`] = 1;
 
     } else if (existing.type === type) {
@@ -73,7 +89,10 @@ export async function POST(
 
     await News.updateOne(
       { _id: news._id },
-      { $inc: inc }
+      { 
+        $inc: inc,
+      //  $setOnInsert: { reactions: {} }
+      }
     );
 
     // ✅ TYPE SAFE FETCH

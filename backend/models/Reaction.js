@@ -30,5 +30,6 @@ ReactionSchema.index(
   { unique: true }
 );
 
+
 export default mongoose.models.Reaction ||
   mongoose.model("Reaction", ReactionSchema);
