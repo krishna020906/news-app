@@ -53,7 +53,7 @@ export default function Header() {
         </div>
 
         {/* SEARCH + FILTER */}
-        <div className="hidden md:flex w-[450px] items-center gap-2 relative">
+        <div className="hidden md:flex w-[550px] items-center gap-2 relative pl-[45px]">
 
           <SearchBar
             value={query}
