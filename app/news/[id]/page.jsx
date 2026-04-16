@@ -84,6 +84,61 @@ export default function NewsDetailPage() {
 
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  //add to streak
+  async function markAsRead() {
+    try {
+      console.log("🔥 Marking read...");
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) return;
+
+      const token = await user.getIdToken();
+
+      const res = await fetch("/api/user/read", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      console.log("✅ streak updated:", data);
+
+    } catch (err) {
+      console.error("❌ mark read failed", err);
+    }
+  }
+  useEffect(() => {
+    if (post) {
+      markAsRead();
+    }
+  }, [post]);
+  // useEffect(() => {
+  //   async function markRead() {
+  //     try {
+  //       const auth = getAuth();
+  //       const user = auth.currentUser;
+  //       if (!user) return;
+
+  //       const token = await user.getIdToken();
+
+  //       await fetch("/api/user/read", {
+  //         method: "POST",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //     } catch (err) {
+  //       console.error("Streak update failed", err);
+  //     }
+  //   }
+
+  //   markRead();
+  // }, []);
  
   // load the post
   useEffect(() => {

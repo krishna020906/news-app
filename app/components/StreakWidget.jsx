@@ -1,9 +1,11 @@
+//app/cpmponents/streakwidget.jsx
 export default function StreakWidget({ streak = 0 }) {
   const levels = [3, 7, 15, 30];
   const next = levels.find((n) => streak < n) || 30;
   const prev = levels[levels.indexOf(next) - 1] || 0;
 
-  const progress = ((streak - prev) / (next - prev)) * 100;
+  const progress =
+  next === prev ? 100 : ((streak - prev) / (next - prev)) * 100;
 
   return (
     <div className=" flex flex-col gap-2">

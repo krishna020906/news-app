@@ -14,6 +14,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       index: true,
     },
+  
 
     // For personalized news
     name: {
@@ -49,7 +50,7 @@ const UserSchema = new mongoose.Schema(
     type: [String],
     default: [],
   },
-  streakCount: {
+  streak: {
     type: Number,
     default: 0
   },

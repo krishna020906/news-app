@@ -59,6 +59,31 @@ export default function MainPage() {
     console.log("[MAINPAGE] query updated:", query);
   }, [query]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchStreak() {
+      try {
+        const token = await user.getIdToken();
+
+        const res = await fetch("/api/user/streak", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setStreak(data.streak ?? 0);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchStreak();
+  }, [user, pathname]); // ✅ ADD pathname here
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -176,7 +201,7 @@ export default function MainPage() {
 
             {/* BOTTOM SECTION */}
             <div className="space-y-4">
-              <StreakWidget />
+              <StreakWidget streak={streak} />
             </div>
 
           </aside>

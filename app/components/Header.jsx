@@ -47,7 +47,7 @@ export default function Header() {
           <ThemeToggle />
 
           <div>
-            <div className="text-sm font-semibold">Rembang, Ind</div>
+            <div className="text-sm font-semibold">News App</div>
             <div className="text-[var(--text-body)]">Top Headlines</div>
           </div>
         </div>
